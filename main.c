@@ -218,9 +218,16 @@ int main(int argc, char** argv) {
                     else
                     {
                         printf("\nReceived from FD: %d Slot %d:\n\t%s\n", connections[i], i, buffer);
-                        /* Echo */
-                        sock_puts(connections[i], buffer);
-                        sock_puts(connections[i], "\n");
+                        /* Echo to all others*/
+                        for (int j = 0; j < 5; j++)
+                        {
+                            if (i == j || connections[j] == 0)
+                            {
+                                continue;
+                            }
+                            sock_puts(connections[j], buffer);
+                            sock_puts(connections[j], "\n");
+                        }
                     }
                 }
             }
