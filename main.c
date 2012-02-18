@@ -1,244 +1,147 @@
-/* 
- * File:   main.c
- * Author: lacop
- *
- * Created on February 18, 2012, 10:23 AM
- */
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <unistd.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/time.h>
 #include <netinet/in.h>
-#include <fcntl.h>
+#include <sys/epoll.h>
+#include <errno.h>
 
-/****/
-/* Copied from sockhelp.c (socket-faq-examples) */
-void setnonblocking(int sockfd)
-{
-    int opts = fcntl(sockfd, F_GETFL);
-    if (opts < 0)
-    {
-        perror("fcntl(F_GETFL)");
-        exit(-1);
-    }
-    opts = opts | O_NONBLOCK;
-    if (fcntl(sockfd, F_SETFL, opts) < 0)
-    {
-        perror("fcntl(F_SETFL)");
-        exit(-1);
-    }
-}
+#include "socket.h"
+#include "util.h"
 
-int sock_write(int sockfd, char *buf, size_t count)
-{
-    size_t bytes_sent = 0;
-    int this_write;
-    
-    while (bytes_sent < count)
-    {
-        do
-        {
-            this_write = write(sockfd, buf, count - bytes_sent);
-        } while (this_write < 0 && errno == EINTR);
-        if (this_write <= 0)
-        {
-            return this_write;
-        }
-        bytes_sent += this_write;
-        buf += this_write;
-    }
-    return count;
-} 
-
-int sock_puts(int sockfd, char *str)
-{
-    sock_write(sockfd, str, strlen(str));
-}
-
-int sock_gets(int sockfd, char *str, size_t count)
-{
-    int bytes_read;
-    int total_count = 0;
-    char *current_position;
-    char last_read = 0;
-    
-    current_position = str;
-    while (last_read != 10)
-    {
-        bytes_read = read(sockfd, &last_read, 1);
-        if (bytes_read <= 0)
-        {
-            /* The other side may have closed unexpectedly */
-            return -1; /* Is this effective on other platforms than linux? */
-        }
-        if (total_count < count && last_read != 10 && last_read !=13)
-        {
-            current_position[0] = last_read;
-            current_position++;
-            total_count++;
-        }
-    }
-    if (count > 0)
-    {
-        current_position[0] = 0;
-    }
-    return total_count;
-}
-
-/*****/
+// TODO: Configuration structure, store stuff like this there at startup
+#define MAXEVENTS 32
+#define TIMEOUT 5000
 
 int main(int argc, char** argv) {
-    printf("Launching server...\n");
-     
-    /* Create socket */
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-    {
-        perror("Socket error");
-        return -1;
-    }
+    const unsigned short port = 6667;
     
-    int reuse_addr = 1;
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(reuse_addr));
-    /* Set non-blocking */
-    setnonblocking(sockfd);    
+    info_print_format("Starting server at port %d", port);
+    int serverfd = socket_create_and_bind(INADDR_ANY, port);
+    info_print("Setting server socket to nonblocking mode");
+    socket_set_nonblocking(serverfd);
+    info_print("Listening with max number of clients");
+    socket_listen(serverfd, -1);
     
-    /* Bind */
-    struct sockaddr_in server_addr, client_addr;
-    memset(&server_addr, 0, sizeof(server_addr));
+    info_print("Creating and setting up epolll descriptor");
+    int epollfd = socket_epoll_create_and_setup(serverfd);
+    struct epoll_event *events = calloc(MAXEVENTS, sizeof(struct epoll_event));
     
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(6667);
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-    
-    if (bind(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0)
-    {
-        perror("Bind error");
-        close(sockfd);
-        return -1;
-    }
-    
-    listen(sockfd, 5);
-    printf("Listening for clients\n");
-    
-    int highest_fd = sockfd;
-    int connections[5];
-    memset((char *) &connections, 0, sizeof(connections));
-    
-    fd_set sockets;
-    struct timeval timeout;
-    
+    info_print("Entering main listen loop");
     while (1)
     {
-        /* Reset sockets set, add the server socket */
-        FD_ZERO(&sockets);
-        FD_SET(sockfd, &sockets);
-        /* Add other connections */
-        for (int i = 0; i < 5; i++)
+        int n = epoll_wait(epollfd, events, MAXEVENTS, TIMEOUT);
+        if (n < 0)
         {
-            if (connections[i] != 0)
-            {
-                FD_SET(connections[i], &sockets);
-                if (connections[i] > highest_fd)
-                {
-                    highest_fd = connections[i];
-                }
-            }
+            error_print_exit("epoll_wait");
         }
         
-        timeout.tv_sec = 1;
-        timeout.tv_usec = 0;
-        
-        int readsocks = select(highest_fd+1, &sockets, (fd_set *) 0, (fd_set *) 0, &timeout);
-        if (readsocks < 0) 
+        if (n == 0)
         {
-            perror("Select error");
-            return -1;
-        }
-        if (readsocks == 0)
-        {
-            /* No change, output heartbeat */
-            printf("."); 
+            /* No events, timed-out */
+            printf(".");
             fflush(stdout);
         }
         else
         {
-            /* Something has happened */
-            if (FD_ISSET(sockfd, &sockets))
+            for(int i = 0; i < n; i++)
             {
-                /* New connection */
-                int newconn = accept(sockfd, NULL, NULL);
-                if (newconn < 0)
+                if (events[i].events & EPOLLERR || events[i].events & EPOLLHUP || !(events[i].events & EPOLLIN))
                 {
-                    perror("Accept error");
-                    return -1;
+                    /* An error occurred on this socket (or disconnected) */
+                    info_print_format("Socket error at event %d, fd: %d", i, events[i].data.fd);
+                    close(events[i].data.fd);
                 }
-                
-                setnonblocking(newconn);
-                /* Assign a slot for the client */
-                for (int i = 0; i < 5; i++)
+                else if (events[i].data.fd == serverfd)
                 {
-                    if (connections[i] == 0)
+                    /* Event at the server descriptor - new incoming connection(s) */
+                    while (1)
                     {
-                        printf("\nConnection accepted - FD: %d Slot %d\n", newconn, i);
-                        connections[i] = newconn;
-                        newconn = -1;
-                        break;
-                    }
-                }
-                
-                if (newconn != -1)
-                {
-                    /* Could not find an empty slot */
-                    printf("\nConnection refused - no more room\n");
-                    
-                    sock_puts(newconn, "Server is full, try again later.\r\n");
-                    close(newconn);
-                }
-            }
-            
-            for(int i = 0; i < 5; i++) 
-            {
-                if (FD_ISSET(connections[i], &sockets))
-                {
-                    /* Data received */
-                    char buffer [512];
-                    if (sock_gets(connections[i], buffer, 512) < 0)
-                    {
-                        printf("\nConnection lost - FD: %d Slot %d\n", connections[i], i);
-                        /* Free up the slot*/
-                        close(connections[i]);
-                        connections[i] = 0;
-                    }
-                    else
-                    {
-                        printf("\nReceived from FD: %d Slot %d:\n\t%s\n", connections[i], i, buffer);
-                        /* Echo to all others*/
-                        for (int j = 0; j < 5; j++)
+                        struct sockaddr client_addr;
+                        socklen_t client_addr_len = sizeof(client_addr);
+                        
+                        int clientfd = accept(serverfd, &client_addr, &client_addr_len);
+                        if (clientfd < 0)
                         {
-                            if (i == j || connections[j] == 0)
+                            if (errno == EAGAIN || errno == EWOULDBLOCK)
                             {
-                                continue;
+                                /* All waiting incoming connections have been processed */
+                                break;
                             }
-                            sock_puts(connections[j], buffer);
-                            sock_puts(connections[j], "\n");
+                            error_print("accept");
+                            break;
                         }
+                        
+                        if (socket_set_nonblocking(clientfd) < 0)
+                        {
+                            error_print_exit("socket_set_nonblocking");
+                        }
+                        
+                        struct epoll_event event;
+                        event.data.fd = clientfd;
+                        event.events = EPOLLIN | EPOLLET;
+                        if (epoll_ctl(epollfd, EPOLL_CTL_ADD, clientfd, &event) < 0)
+                        {
+                            error_print_exit("epoll_ctl");
+                        }
+                        
+                        info_print_format("Accepted new connection, fd: %d", clientfd);
+                    }
+                }
+                else
+                {
+                    /* Data available at this socket */
+                    ssize_t read_size;
+                    char buffer[1024];
+                    int disconnect = 0;
+                    while (1)
+                    {
+                        read_size = read(events[i].data.fd, buffer, sizeof(buffer));
+                        if (read_size < 0)
+                        {
+                            /* EAGAIN means all available data has been read, 
+                             * everything else is an error
+                             */
+                            if (errno != EAGAIN)
+                            {
+                                error_print("read");
+                                disconnect = 1;
+                            }
+                            break;
+                        }
+                        
+                        if (read_size == 0)
+                        {
+                            /* EOF, connection was closed */
+                            disconnect = 1;
+                            break;
+                        }
+                        else
+                        {
+                            // TODO: Proper fix for this
+                            if (read_size == 1 && buffer[0] == 0x04)
+                            {
+                                /* Ctrl-D = EOT (End of Transmission) */
+                                disconnect = 1;
+                                break;
+                            }
+                            
+                            /* Send buffer contents back to client */
+                            if (write(events[i].data.fd, buffer, read_size) < 0)
+                            {
+                                error_print_exit("write");
+                            }
+                        }
+                    }
+                    if (disconnect)
+                    {
+                        info_print_format("Closing connection, fd: %d", events[i].data.fd);
+                        close(events[i].data.fd);
                     }
                 }
             }
         }
     }
-    /*
-    printf("Shutting down");
     
-    close(sockfd);
-    
-    return (EXIT_SUCCESS);
-    */
+    return 0;
 }
 
