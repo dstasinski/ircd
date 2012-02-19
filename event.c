@@ -12,9 +12,10 @@
 #include "client.h"
 
 event_handler *event_handlers = NULL;
+
 void event_register_handler(event_callback_func callback, event_flags flags)
 {
-    event_handler *handler = (event_handler *) malloc(sizeof(handler));
+    event_handler *handler = malloc(sizeof(event_handler));
     handler->callback = callback;
     handler->flags = flags;
     handler->next = NULL;
@@ -169,10 +170,12 @@ void event_start_loop(int serverfd, int epollfd)
                     }
                     if (disconnect)
                     {
+                        // TODO: Reorder operations?
                         info_print_format("Closing connection, fd: %d", event_data->fd);
                         close(event_data->fd);
                         
                         event_dispatch_event(event_flags_disconnect, &callback_data);
+                        client_delete(event_data->client);
                     }
                 }
             }

@@ -5,6 +5,7 @@
 #include <sys/epoll.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "socket.h"
 #include "util.h"
@@ -24,16 +25,10 @@ int callback_connect(event_callback_data *callback_data)
 {
     info_print_format("Client connected, fd=%d", callback_data->connected_event_data->fd);
     callback_data->connected_event_data->client->data = 100+callback_data->connected_event_data->fd;
-    return 0;
-}
-
-int callback_data(event_callback_data *callback_data)
-{
-    info_print_format("%d", callback_data->event_data->client->data);
-    callback_data->event_data->client->data += 1;
     
-    /* Send buffer contents back to client */
-    if (write(callback_data->event_data->fd, callback_data->buffer, callback_data->buffer_length) < 0)
+    char buffer[100];
+    int length = sprintf(buffer, "Welcome client %d!\r\nPlease enter your name:\r\n", callback_data->connected_event_data->fd);
+    if (write(callback_data->connected_event_data->fd, buffer, length) < 0)
     {
         error_print_exit("write");
     }
@@ -41,9 +36,38 @@ int callback_data(event_callback_data *callback_data)
     return 0;
 }
 
+int callback_recv(event_callback_data *callback_data)
+{
+    /*info_print_format("%d", callback_data->event_data->client->data);
+    callback_data->event_data->client->data += 1;*/
+    
+    /* Send buffer contents back to client */
+    //if (write(callback_data->event_data->fd, callback_data->buffer, callback_data->buffer_length) < 0)
+    //{
+    //    error_print_exit("write");
+    //}
+    
+    if (callback_data->event_data->client->name == NULL)
+    {
+        callback_data->event_data->client->name = malloc((callback_data->buffer_length-1)*sizeof(char));
+        memcpy(callback_data->event_data->client->name, callback_data->buffer, callback_data->buffer_length-2);
+        callback_data->event_data->client->name[callback_data->buffer_length-2] = '\0';
+        
+        char buffer[100];
+        int length = sprintf(buffer, "Welcome %s\r\n", callback_data->event_data->client->name);
+        write(callback_data->event_data->fd, buffer, length);
+    }
+    else
+    {
+        info_print_format("Message from %s: %s", callback_data->event_data->client->name, callback_data->buffer);
+    }
+    
+    return 0;
+}
+
 int callback_disconnect(event_callback_data *callback_data)
 {
-    info_print_format("Client disconnected, fd=%d", callback_data->event_data->fd);
+    info_print_format("Client disconnected, fd=%d, name=%s", callback_data->event_data->fd, (callback_data->event_data->client->name != NULL) ? callback_data->event_data->client->name : "NULL");
     
     return 0;
 }
@@ -79,7 +103,7 @@ int main(int argc, char** argv)
     info_print("Registering event handlers");
     event_register_handler(callback_timeout, event_flags_timeout);
     event_register_handler(callback_connect, event_flags_connect);
-    event_register_handler(callback_data, event_flags_data);
+    event_register_handler(callback_recv, event_flags_data);
     
     info_print("Entering main event loop");
     event_start_loop(serverfd, epollfd);

@@ -73,11 +73,12 @@ int socket_listen(int socketfd, int backlog)
 
 int socket_epoll_ctl(int socketfd, int epollfd, client_data *client, socket_event_data **event_data)
 {
-    (*event_data) = (socket_event_data *) malloc(sizeof(event_data));
+    (*event_data) = malloc(sizeof(socket_event_data));
     (*event_data)->fd = socketfd;
     (*event_data)->client = client;
     
     struct epoll_event event;
+    memset(&event, 0, sizeof(event));
     event.data.ptr = *event_data;
     event.events = EPOLLIN | EPOLLET; // TODO: (?) remove edge triggering flag, use level triggering
     
