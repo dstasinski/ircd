@@ -68,6 +68,17 @@ int socket_listen(int socketfd, int backlog)
     return 0;
 }
 
+int socket_epoll_ctl(int socketfd, int epollfd)
+{
+    struct epoll_event event;
+    event.data.fd = socketfd;
+    event.events = EPOLLIN | EPOLLET; // TODO: (?) remove edge triggering flag, use level triggering
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, socketfd, &event) < 0)
+    {
+        return error_print("epoll_ctl");
+    }
+}
+
 int socket_epoll_create_and_setup(int socketfd)
 {
     int epollfd = epoll_create1(0);
@@ -76,12 +87,9 @@ int socket_epoll_create_and_setup(int socketfd)
         return error_print("epoll_create1");
     }
     
-    struct epoll_event event;
-    event.data.fd = socketfd;
-    event.events = EPOLLIN | EPOLLET; // TODO: remove edge triggering flag, use level triggering
-    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, socketfd, &event) < 0)
+    if (socket_epoll_ctl(socketfd, epollfd) < 0)
     {
-        return error_print("epoll_ctl");
+        return error_print("socket_epoll_ctl");
     }
     
     return epollfd;

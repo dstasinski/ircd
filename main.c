@@ -11,19 +11,36 @@
 // TODO: Configuration structure, store stuff like this there at startup
 #define MAXEVENTS 32
 #define TIMEOUT 5000
+#define PORT 6667
 
-int main(int argc, char** argv) {
-    const unsigned short port = 6667;
+int main(int argc, char** argv) {    
     
-    info_print_format("Starting server at port %d", port);
-    int serverfd = socket_create_and_bind(INADDR_ANY, port);
+    info_print_format("Starting server at port %d", PORT);
+    int serverfd = socket_create_and_bind(INADDR_ANY, PORT);
+    if (serverfd < 0)
+    {
+        error_print_exit("socket_create_and_bind");
+    }
+    
     info_print("Setting server socket to nonblocking mode");
-    socket_set_nonblocking(serverfd);
+    if (socket_set_nonblocking(serverfd) < 0)
+    {
+        error_print_exit("socket_set_nonblocking");
+    }
+    
     info_print("Listening with max number of clients");
-    socket_listen(serverfd, -1);
+    if (socket_listen(serverfd, -1) < 0)
+    {
+        error_print_exit("socket_listen");
+    }
     
     info_print("Creating and setting up epolll descriptor");
     int epollfd = socket_epoll_create_and_setup(serverfd);
+    if (epollfd < 0)
+    {
+        error_print_exit("socket_epoll_create_and_setup");
+    }
+    
     struct epoll_event *events = calloc(MAXEVENTS, sizeof(struct epoll_event));
     
     info_print("Entering main listen loop");
@@ -76,12 +93,10 @@ int main(int argc, char** argv) {
                             error_print_exit("socket_set_nonblocking");
                         }
                         
-                        struct epoll_event event;
-                        event.data.fd = clientfd;
-                        event.events = EPOLLIN | EPOLLET;
-                        if (epoll_ctl(epollfd, EPOLL_CTL_ADD, clientfd, &event) < 0)
+                        
+                        if (socket_epoll_ctl(clientfd, epollfd) < 0)
                         {
-                            error_print_exit("epoll_ctl");
+                            error_print_exit("socket_epoll_ctl");
                         }
                         
                         info_print_format("Accepted new connection, fd: %d", clientfd);
