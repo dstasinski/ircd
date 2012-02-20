@@ -71,15 +71,13 @@ int socket_listen(int socketfd, int backlog)
     return 0;
 }
 
-int socket_epoll_ctl(int socketfd, int epollfd, client_data *client, socket_event_data **event_data)
+int socket_epoll_ctl(int socketfd, int epollfd, client_data *client)
 {
-    (*event_data) = malloc(sizeof(socket_event_data));
-    (*event_data)->fd = socketfd;
-    (*event_data)->client = client;
+    client->fd = socketfd;
     
     struct epoll_event event;
     memset(&event, 0, sizeof(event));
-    event.data.ptr = *event_data;
+    event.data.ptr = client;
     event.events = EPOLLIN | EPOLLET; // TODO: (?) remove edge triggering flag, use level triggering
     
     if (epoll_ctl(epollfd, EPOLL_CTL_ADD, socketfd, &event) < 0)
@@ -98,8 +96,9 @@ int socket_epoll_create_and_setup(int socketfd)
         return error_print("epoll_create1");
     }
     
-    socket_event_data *event_data;
-    if (socket_epoll_ctl(socketfd, epollfd, NULL, &event_data) < 0)
+    client_data *client = client_allocate_new();
+    client->server = 1;
+    if (socket_epoll_ctl(socketfd, epollfd, client) < 0)
     {
         return error_print("socket_epoll_ctl");
     }

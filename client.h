@@ -3,7 +3,9 @@
 
 typedef struct client_data
 {
-    int data;
+    int fd;
+    int server;
+    
     char *name;
     
     struct client_data *prev;

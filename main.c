@@ -10,6 +10,7 @@
 #include "socket.h"
 #include "util.h"
 #include "event.h"
+#include "client.h"
 
 // TODO: Configuration structure, store stuff like this there at startup
 #define PORT 6667
@@ -23,12 +24,11 @@ int callback_timeout(event_callback_data *callback_data)
 
 int callback_connect(event_callback_data *callback_data)
 {
-    info_print_format("Client connected, fd=%d", callback_data->connected_event_data->fd);
-    callback_data->connected_event_data->client->data = 100+callback_data->connected_event_data->fd;
+    info_print_format("Client connected, fd=%d", callback_data->client_new->fd);
     
     char buffer[100];
-    int length = sprintf(buffer, "Welcome client %d!\r\nPlease enter your name:\r\n", callback_data->connected_event_data->fd);
-    if (write(callback_data->connected_event_data->fd, buffer, length) < 0)
+    int length = sprintf(buffer, "Welcome client %d!\r\nPlease enter your name:\r\n", callback_data->client_new->fd);
+    if (write(callback_data->client_new->fd, buffer, length) < 0)
     {
         error_print_exit("write");
     }
@@ -47,19 +47,32 @@ int callback_recv(event_callback_data *callback_data)
     //    error_print_exit("write");
     //}
     
-    if (callback_data->event_data->client->name == NULL)
+    if (callback_data->client->name == NULL)
     {
-        callback_data->event_data->client->name = malloc((callback_data->buffer_length-1)*sizeof(char));
-        memcpy(callback_data->event_data->client->name, callback_data->buffer, callback_data->buffer_length-2);
-        callback_data->event_data->client->name[callback_data->buffer_length-2] = '\0';
+        callback_data->client->name = malloc((callback_data->buffer_length-1)*sizeof(char));
+        memcpy(callback_data->client->name, callback_data->buffer, callback_data->buffer_length-2);
+        callback_data->client->name[callback_data->buffer_length-2] = '\0';
         
         char buffer[100];
-        int length = sprintf(buffer, "Welcome %s\r\n", callback_data->event_data->client->name);
-        write(callback_data->event_data->fd, buffer, length);
+        int length = snprintf(buffer, sizeof(buffer), "Welcome %s\r\n", callback_data->client->name);
+        write(callback_data->client->fd, buffer, length);
     }
     else
     {
-        info_print_format("Message from %s: %s", callback_data->event_data->client->name, callback_data->buffer);
+        info_print_format("Message from %s: %s", callback_data->client->name, callback_data->buffer);
+        
+        // TODO: proper allocation, use printf style sending
+        char buffer[2048];
+        int length = snprintf(buffer, sizeof(buffer), "[%s] : %s\r\n", callback_data->client->name, callback_data->buffer);
+        client_data *client = clients;
+        while (client != NULL)
+        {
+            if (client->server == 0)
+            {
+                write(client->fd, buffer, length);
+            }
+            client = client->next;
+        }
     }
     
     return 0;
@@ -67,7 +80,7 @@ int callback_recv(event_callback_data *callback_data)
 
 int callback_disconnect(event_callback_data *callback_data)
 {
-    info_print_format("Client disconnected, fd=%d, name=%s", callback_data->event_data->fd, (callback_data->event_data->client->name != NULL) ? callback_data->event_data->client->name : "NULL");
+    info_print_format("Client disconnected, fd=%d, name=%s", callback_data->client->fd, (callback_data->client->name != NULL) ? callback_data->client->name : "NULL");
     
     return 0;
 }

@@ -74,21 +74,21 @@ void event_start_loop(int serverfd, int epollfd)
         {
             for(int i = 0; i < n; i++)
             {
-                socket_event_data *event_data = (socket_event_data *) events[i].data.ptr;
+                client_data *client_event_data = (client_data *) events[i].data.ptr;
                 
                 event_callback_data callback_data;
-                callback_data.event_data = event_data;
-                callback_data.connected_event_data = NULL;
+                callback_data.client = client_event_data;
+                callback_data.client_new = NULL;
                 callback_data.buffer = NULL;
                 callback_data.buffer_length = 0;
                 
                 if (events[i].events & EPOLLERR || events[i].events & EPOLLHUP || !(events[i].events & EPOLLIN))
                 {
                     /* An error occurred on this socket (or disconnected) */
-                    info_print_format("Socket error at event %d, fd: %d", i, event_data->fd);
-                    close(event_data->fd);
+                    info_print_format("Socket error at event %d, fd: %d", i, client_event_data->fd);
+                    close(client_event_data->fd);
                 }
-                else if (event_data->fd == serverfd)
+                else if (client_event_data->fd == serverfd)
                 {
                     /* Event at the server descriptor - new incoming connection(s) */
                     while (1)
@@ -113,15 +113,15 @@ void event_start_loop(int serverfd, int epollfd)
                             error_print_exit("socket_set_nonblocking");
                         }
                         
-                        socket_event_data *client_event_data = NULL;
-                        if (socket_epoll_ctl(clientfd, epollfd, client_allocate_new(), &client_event_data) < 0)
+                        client_data *client_new = client_allocate_new();
+                        if (socket_epoll_ctl(clientfd, epollfd, client_new) < 0)
                         {
                             error_print_exit("socket_epoll_ctl");
                         }
                         
                         info_print_format("Accepted new connection, fd: %d", clientfd);
                         
-                        callback_data.connected_event_data = client_event_data;
+                        callback_data.client_new = client_new;
                         event_dispatch_event(event_flags_connect, &callback_data);
                     }
                 }
@@ -133,7 +133,7 @@ void event_start_loop(int serverfd, int epollfd)
                     int disconnect = 0;
                     while (1)
                     {
-                        read_size = read(event_data->fd, buffer, sizeof(buffer));
+                        read_size = read(client_event_data->fd, buffer, sizeof(buffer));
                         if (read_size < 0)
                         {
                             /* EAGAIN means all available data has been read, 
@@ -163,6 +163,9 @@ void event_start_loop(int serverfd, int epollfd)
                                 break;
                             }
                             
+                            // TODO: line splitting etc
+                            buffer[read_size] = '\0';
+                            
                             callback_data.buffer = buffer;
                             callback_data.buffer_length = read_size;
                             event_dispatch_event(event_flags_data, &callback_data);
@@ -171,11 +174,11 @@ void event_start_loop(int serverfd, int epollfd)
                     if (disconnect)
                     {
                         // TODO: Reorder operations?
-                        info_print_format("Closing connection, fd: %d", event_data->fd);
-                        close(event_data->fd);
+                        info_print_format("Closing connection, fd: %d", client_event_data->fd);
+                        close(client_event_data->fd);
                         
                         event_dispatch_event(event_flags_disconnect, &callback_data);
-                        client_delete(event_data->client);
+                        client_delete(client_event_data);
                     }
                 }
             }

@@ -7,7 +7,8 @@ client_data *clients = NULL;
 client_data *client_allocate_new()
 {
     client_data *client = malloc(sizeof(client_data));
-    client->data = 0;
+    client->fd = 0;
+    client->server = 0;
     client->name = NULL;
     client->prev = NULL;
     client->next = clients;

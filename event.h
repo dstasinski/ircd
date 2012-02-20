@@ -2,7 +2,7 @@
 #define	EVENT_H
 
 #include "socket.h"
-
+#include "client.h"
 
 #define MAXEVENTS 32
 #define TIMEOUT 5000
@@ -18,8 +18,8 @@ typedef enum event_flags
 typedef struct event_callback_data
 {
     event_flags flags;
-    const socket_event_data *event_data;
-    const socket_event_data *connected_event_data;
+    client_data *client;
+    client_data *client_new;
     const char *buffer;
     ssize_t buffer_length;
 } event_callback_data;
