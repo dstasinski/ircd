@@ -1,0 +1,18 @@
+Roadmap
+* clean up main loop to some function with function pointers for event handling 
+* create a list of connected users
+  * linked list of structs - fd, hostname, ...
+  * events have pointer to the list element in user data
+* send messages to all others clients
+* users can register their name, have some state (registered or not), ...
+- parse commands
+  - utils to do string manipulations
+  - rfc message parsing
+  - per-user buffers, append data on receive, split into lines, dispatch events
+- proper login to server with /user etc
+- privmsg, notice
+- heartbeat timeout for ping/pong etc
+- channels - linked list channels like users, with hashtables etc
+- send messages to other clients in the same channel
+- add stdin to the monitored descriptors, receive commands from there
+- start implementing the rest of RFC
