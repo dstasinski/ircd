@@ -1,4 +1,5 @@
 Roadmap
+* structures - make macros for list/hashmap definitions and operation functions, then just use them in each submodule with names and types substituted
 * clean up main loop to some function with function pointers for event handling 
 * create a list of connected users
   * linked list of structs - fd, hostname, ...

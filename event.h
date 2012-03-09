@@ -1,6 +1,8 @@
 #ifndef EVENT_H
 #define	EVENT_H
 
+#include <stddef.h>
+
 #include "socket.h"
 #include "client.h"
 
@@ -21,7 +23,7 @@ typedef struct event_callback_data
     client_data *client;
     client_data *client_new;
     const char *buffer;
-    ssize_t buffer_length;
+    size_t buffer_length;
 } event_callback_data;
 
 typedef int (*event_callback_func)(event_callback_data *callback_data);
@@ -38,6 +40,8 @@ extern event_handler *event_handlers;
 void event_register_handler(event_callback_func callback, event_flags flags);
 //TODO: deregister all
 void event_dispatch_event(event_flags flags, event_callback_data *callback_data);
+
+void event_register_handlers();
 
 void event_start_loop(int serverfd, int epollfd);
 

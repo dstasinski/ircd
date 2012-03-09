@@ -114,9 +114,10 @@ int main(int argc, char** argv)
     }
     
     info_print("Registering event handlers");
-    event_register_handler(callback_timeout, event_flags_timeout);
-    event_register_handler(callback_connect, event_flags_connect);
-    event_register_handler(callback_recv, event_flags_data);
+    //event_register_handler(callback_timeout, event_flags_timeout);
+    //event_register_handler(callback_connect, event_flags_connect);
+    //event_register_handler(callback_recv, event_flags_data);
+    event_register_handlers();
     
     info_print("Entering main event loop");
     event_start_loop(serverfd, epollfd);

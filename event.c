@@ -47,10 +47,16 @@ void event_dispatch_event(event_flags flags, event_callback_data *callback_data)
     {
         if ((handler->flags & flags) != 0)
         {
+            // TODO: get return value, maybe dispatch error event if result != 0
             handler->callback(callback_data);
         }
         handler = handler->next;
     }
+}
+
+void event_register_handlers()
+{
+    event_register_handler(client_callback_data, event_flags_data);
 }
 
 void event_start_loop(int serverfd, int epollfd)
@@ -129,7 +135,7 @@ void event_start_loop(int serverfd, int epollfd)
                 {
                     /* Data available at this socket */
                     ssize_t read_size;
-                    char buffer[1024];
+                    char buffer[512];
                     int disconnect = 0;
                     while (1)
                     {
@@ -158,7 +164,7 @@ void event_start_loop(int serverfd, int epollfd)
                             // TODO: Proper fix for this
                             if (read_size == 1 && buffer[0] == 0x04)
                             {
-                                /* Ctrl-D = EOT (End of Transmission) */
+                                /* Ctrl-D = EOT (0x04, End of Transmission) */
                                 disconnect = 1;
                                 break;
                             }
