@@ -4,6 +4,7 @@
 
 #include "client.h"
 #include "event.h"
+#include "message.h"
 
 client_data *clients = NULL;
 
@@ -51,7 +52,7 @@ int client_callback_data(event_callback_data *e)
     char *pos = start+1;
     for(int i = 1; i < e->buffer_length; i++)
     {
-        if (*(pos-1) == 'a' && *pos == 'b')
+        if (*(pos-1) == '\r' && *pos == '\n')
         {
             // Found line end, append everything from start to pos-1 to the
             // line buffer and process it
@@ -64,8 +65,26 @@ int client_callback_data(event_callback_data *e)
             e->client->line_buffer_pos += length;
             e->client->line_buffer[e->client->line_buffer_pos] = '\0';
             
-            // Process message and reset buffer
-            printf("message |%s|\n", e->client->line_buffer);
+            // Parse the line into a message structure
+            message_data *message = message_parse(e->client->line_buffer);
+            
+            // Process the message
+            printf("message |%s| parsed as\n", e->client->line_buffer);
+            if (message != NULL)
+            {
+                printf("\t |%s| (%d), argc=%d\n", message->command, message->command_numeric, message->argc);
+                for(int j = 0; j < message->argc; j++)
+                {
+                    printf("\t %d |%s|\n", j, message->argv[j]);
+                }
+            }
+            else
+            {
+                printf("\t NULL\n");
+            }
+            
+            // Clean up
+            message_delete(message);
             
             e->client->line_buffer_pos = 0;
             start = pos+1;
