@@ -147,7 +147,12 @@ void event_start_loop(int serverfd, int epollfd)
                              */
                             if (errno != EAGAIN)
                             {
-                                error_print("read");
+                                // Ignore the error if the client sent QUIT
+                                // (or is quitting for some other reason)
+                                if (client_event_data->quitting == 0)
+                                {
+                                    error_print("read");
+                                }
                                 disconnect = 1;
                             }
                             break;

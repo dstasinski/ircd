@@ -1,15 +1,28 @@
+Ordered list of things to do next:
+- Create a hashtable for nicknames
+- Check for duplicates when setting/changing nickname
+- Utility functions for numeric replies, error handling, ...
+- Outgoing message buffers, epoll for writable state, ...
+- Implement notice and simplest form of privmsg - directly to nickname, no channels
+Bigger chunks after that:
+- Start working on channels
+- User modes, channel modes
+- Whois, who, ...
+- All other required commands (except server to server)
+Far future, optional crap
+- Ident lookup
+- Configuration file parsing, ...
+- Data storage (bans, whowas history, ...)
+- Operator commands - reset, reload, ...
+- Multiple server support - message relaying, ...
+- Benchmarking - create very simple clients that will join random channels and keep sending random messages
+
 Roadmap
 * structures - make macros for list/hashmap definitions and operation functions, then just use them in each submodule with names and types substituted
 * clean up main loop to some function with function pointers for event handling 
-* create a list of connected users
-  * linked list of structs - fd, hostname, ...
-  * events have pointer to the list element in user data
 * send messages to all others clients
-* users can register their name, have some state (registered or not), ...
 - parse commands
-  - utils to do string manipulations
-  - rfc message parsing
-  - per-user buffers, append data on receive, split into lines, dispatch events
+  - parse prefix
 - proper login to server with /user etc
 - privmsg, notice
 - heartbeat timeout for ping/pong etc

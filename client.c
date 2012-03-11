@@ -5,6 +5,7 @@
 #include "client.h"
 #include "event.h"
 #include "message.h"
+#include "util.h"
 
 client_data *clients = NULL;
 
@@ -16,12 +17,16 @@ client_data *client_allocate_new()
     
     client->line_buffer_pos = 0;
     
-    client->name = NULL;
     client->prev = NULL;
     client->next = clients;
     
-    clients = client;
+    client->registered = 0;
+    client->nickname = NULL;
+    client->username = NULL;
+    client->quitting = 0;
     
+    // Prepend to the client list
+    clients = client;
     return client;
 }
 
@@ -36,10 +41,16 @@ void client_delete(client_data* client_data)
         clients = client_data->next;
     }
     
-    if (client_data->name != NULL)
+    // TODO: static allocation, or macros or something to avoid this mess
+    if (client_data->nickname != NULL)
     {
-        free(client_data->name);
+        free(client_data->nickname);
     }
+    if (client_data->username != NULL)
+    {
+        free(client_data->username);
+    }
+    
     free(client_data);
 }
 
@@ -69,14 +80,10 @@ int client_callback_data(event_callback_data *e)
             message_data *message = message_parse(e->client->line_buffer);
             
             // Process the message
-            printf("message |%s| parsed as\n", e->client->line_buffer);
+            info_print_format("Got message %s", e->client->line_buffer); // TODO: Change to debug print, not info
             if (message != NULL)
             {
-                printf("\t |%s| (%d), argc=%d\n", message->command, message->command_numeric, message->argc);
-                for(int j = 0; j < message->argc; j++)
-                {
-                    printf("\t %d |%s|\n", j, message->argv[j]);
-                }
+                info_print_format("Command [%s] argc=%d", message->command, message->argc);
                 
                 // TODO: Make static / reuse inside the function / something else
                 message_callback_data *callback_data = malloc(sizeof(message_callback_data));
@@ -84,10 +91,6 @@ int client_callback_data(event_callback_data *e)
                 callback_data->message_data = message;
                 message_dispatch_command(message->command, callback_data);
                 free(callback_data);
-            }
-            else
-            {
-                printf("\t NULL\n");
             }
             
             // Clean up
@@ -106,4 +109,24 @@ int client_callback_data(event_callback_data *e)
     }
     
     return 0;
+}
+
+void client_set_nickname(client_data *client, const char *nickname)
+{
+    if (client->nickname != NULL)
+    {
+        free(client->nickname);
+    }
+    client->nickname = malloc(sizeof(char)*(strlen(nickname)+1));
+    strcpy(client->nickname, nickname);
+}
+
+void client_set_username(client_data *client, const char *username)
+{
+    if (client->username != NULL)
+    {
+        free(client->username);
+    }
+    client->username = malloc(sizeof(char)*(strlen(username)+1));
+    strcpy(client->username, username);
 }

@@ -148,6 +148,10 @@ void message_dispatch_command(const char *command, message_callback_data *data)
         {
             found = 1;
             handler->callback(data);
+            // TODO: Check return value, 0 means handled, other values are some
+            // error codes (not enough params, wrong handler, ...)
+            // Stop calling other handlers once 0 is returned, print error
+            // if there isn't any 0 returned
         }
         
         handler = handler->next;

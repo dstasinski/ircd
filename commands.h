@@ -5,7 +5,11 @@
 
 void command_register_handlers();
 
-int command_nick(message_callback_data *callback_data);
+// Registration
+int command_nick(message_callback_data *e);
+int command_user(message_callback_data *e);
+// Quit
+int command_quit(message_callback_data *e);
 
 #endif	/* COMMANDS_H */
 
