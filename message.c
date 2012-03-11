@@ -82,6 +82,7 @@ message_data *message_parse(char *buffer)
         length = buffer - start;
         message->argv[message->argc] = malloc(sizeof(char)*(length+1));
         strncpy(message->argv[message->argc], start, length);
+        message->argv[message->argc][length] = '\0';
         message->argc++;     
         
         // Move behind the space, if any
