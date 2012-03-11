@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "message.h"
-
+#include "util.h"
 
 message_data *message_parse(char *buffer)
 {
@@ -41,6 +41,7 @@ message_data *message_parse(char *buffer)
     {
         buffer = strchr(start, '\0');
     }
+    // TODO: turn to lowercase
     length = buffer - start;
     strncpy(message->command, start, length);
     message->command[length] = '\0';
@@ -107,4 +108,54 @@ void message_delete(message_data *message)
         free(message->argv[i]);
     }
     free(message);
+}
+
+static message_handler *message_handlers[MESSAGE_HANDLER_HASHTABLE_SIZE];
+
+void message_register_handler(const char *command, message_callback_func callback)
+{
+    int bucket = hash(command) % MESSAGE_HANDLER_HASHTABLE_SIZE;
+    message_handler *last = message_handlers[bucket];
+    
+    message_handler *handler = malloc(sizeof(message_handler));
+    strcpy(handler->command, command);
+    handler->callback = callback;
+    handler->next = NULL;
+    
+    if (last == NULL)
+    {
+        message_handlers[bucket] = handler;
+    }
+    else
+    {
+        while (last->next != NULL)
+        {
+            last = last->next;
+        }
+        last->next = handler;
+    }
+}
+
+void message_dispatch_command(const char *command, message_callback_data *data)
+{
+    int bucket = hash(command) % MESSAGE_HANDLER_HASHTABLE_SIZE;
+    message_handler *handler = message_handlers[bucket];
+    
+    int found = 0;
+    while (handler != NULL)
+    {
+        if (strcmp(command, handler->command) == 0)
+        {
+            found = 1;
+            handler->callback(data);
+        }
+        
+        handler = handler->next;
+    }
+    
+    if (found == 0)
+    {
+        // TODO: make a debug print
+        printf("No handler for %s\n", command);
+    }
 }

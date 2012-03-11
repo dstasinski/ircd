@@ -48,8 +48,8 @@ int client_callback_data(event_callback_data *e)
     // TODO: Doesn't work when CR is at the end of one buffer and LF at the
     // beginning of the next one.
     
-    char *start = e->buffer;
-    char *pos = start+1;
+    const char *start = e->buffer;
+    const char *pos = start+1;
     for(int i = 1; i < e->buffer_length; i++)
     {
         if (*(pos-1) == '\r' && *pos == '\n')
@@ -77,6 +77,13 @@ int client_callback_data(event_callback_data *e)
                 {
                     printf("\t %d |%s|\n", j, message->argv[j]);
                 }
+                
+                // TODO: Make static / reuse inside the function / something else
+                message_callback_data *callback_data = malloc(sizeof(message_callback_data));
+                callback_data->event_data = e;
+                callback_data->message_data = message;
+                message_dispatch_command(message->command, callback_data);
+                free(callback_data);
             }
             else
             {

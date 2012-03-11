@@ -13,7 +13,7 @@
 
 event_handler *event_handlers = NULL;
 
-void event_register_handler(event_callback_func callback, event_flags flags)
+void event_register_handler(event_flags flags, event_callback_func callback)
 {
     event_handler *handler = malloc(sizeof(event_handler));
     handler->callback = callback;
@@ -56,7 +56,7 @@ void event_dispatch_event(event_flags flags, event_callback_data *callback_data)
 
 void event_register_handlers()
 {
-    event_register_handler(client_callback_data, event_flags_data);
+    event_register_handler(event_flags_data, client_callback_data);
 }
 
 void event_start_loop(int serverfd, int epollfd)

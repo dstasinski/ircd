@@ -37,7 +37,7 @@ typedef struct event_handler
 
 extern event_handler *event_handlers;
 
-void event_register_handler(event_callback_func callback, event_flags flags);
+void event_register_handler(event_flags flags, event_callback_func callback);
 //TODO: deregister all
 void event_dispatch_event(event_flags flags, event_callback_data *callback_data);
 

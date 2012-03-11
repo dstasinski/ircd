@@ -29,3 +29,18 @@ void _info_print_format(const char *format, ...)
     
     printf("\n");
 }
+
+unsigned long hash(const char *string)
+{
+    // djb2 - simple string hashing
+    
+    unsigned long hash = 5381;
+    int c;
+    
+    while (c = *string++)
+    {
+        hash = ((hash << 5) + hash) + c; // hash*33 + c
+    }
+    
+    return hash;
+}

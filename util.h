@@ -20,4 +20,6 @@ void _info_print_format(const char *format, ...);
 
 //int error_print_exit(char *scope, char *call);
 
+unsigned long hash(const char *string);
+
 #endif	/* UTIL_H */

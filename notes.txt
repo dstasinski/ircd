@@ -17,3 +17,12 @@ Roadmap
 - send messages to other clients in the same channel
 - add stdin to the monitored descriptors, receive commands from there
 - start implementing the rest of RFC
+
+
+- TODO:
+  - better error handling
+  - more info/debug output, with -v switches to turn on/off
+  - remove all printf/..., turn everything into error/info/debug _print
+  - more const qualifiers etc to make the code more robust
+  - static analysis
+  - turn warning into errors, more compiler flags (optimizations etc)
