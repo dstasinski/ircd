@@ -78,7 +78,7 @@ int socket_epoll_ctl(int socketfd, int epollfd, client_data *client)
     struct epoll_event event;
     memset(&event, 0, sizeof(event));
     event.data.ptr = client;
-    event.events = EPOLLIN | EPOLLET; // TODO: (?) remove edge triggering flag, use level triggering
+    event.events = EPOLLIN | EPOLLOUT | EPOLLET;
     
     if (epoll_ctl(epollfd, EPOLL_CTL_ADD, socketfd, &event) < 0)
     {

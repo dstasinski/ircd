@@ -1,6 +1,8 @@
 #ifndef CLIENT_H
 #define	CLIENT_H
 
+#include "send.h"
+
 typedef struct client_data
 {
     int fd;
@@ -13,6 +15,11 @@ typedef struct client_data
     char line_buffer[512];
     int line_buffer_pos;
     
+    // Write queue
+    send_queue_element *send_queue_start;
+    send_queue_element *send_queue_end; // For fast appending to the queue    
+    
+    // Linked-list elements
     struct client_data *prev;
     struct client_data *next;
     
@@ -31,7 +38,7 @@ void client_delete(client_data *client_data);
 
 // TODO: Maybe move somewhere else to remove dependency cycle
 typedef struct event_callback_data event_callback_data;
-int client_callback_data(event_callback_data *e);
+int client_callback_data_in(event_callback_data *e);
 
 void client_set_nickname(client_data *client, const char *nickname);
 void client_set_username(client_data *client, const char *username);

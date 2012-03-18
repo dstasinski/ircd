@@ -6,6 +6,7 @@
 #include "event.h"
 #include "message.h"
 #include "util.h"
+#include "send.h"
 
 client_data *clients = NULL;
 
@@ -16,6 +17,9 @@ client_data *client_allocate_new()
     client->server = 0;
     
     client->line_buffer_pos = 0;
+    
+    client->send_queue_start = NULL;
+    client->send_queue_end = NULL;
     
     client->prev = NULL;
     client->next = clients;
@@ -30,31 +34,38 @@ client_data *client_allocate_new()
     return client;
 }
 
-void client_delete(client_data* client_data)
+void client_delete(client_data* client)
 {
-    if (client_data->prev != NULL)
+    // Remove from the linked list of clients
+    if (client->prev != NULL)
     {
-        client_data->prev->next = client_data->next;
+        client->prev->next = client->next;
     }
     else
     {
-        clients = client_data->next;
+        clients = client->next;
+    }
+    
+    // Clean up all data stored in this client's client_data
+    if (client->send_queue_start != NULL)
+    {
+        send_delete_queue(client->send_queue_start);
     }
     
     // TODO: static allocation, or macros or something to avoid this mess
-    if (client_data->nickname != NULL)
+    if (client->nickname != NULL)
     {
-        free(client_data->nickname);
+        free(client->nickname);
     }
-    if (client_data->username != NULL)
+    if (client->username != NULL)
     {
-        free(client_data->username);
+        free(client->username);
     }
     
-    free(client_data);
+    free(client);
 }
 
-int client_callback_data(event_callback_data *e)
+int client_callback_data_in(event_callback_data *e)
 {
     // TODO: Doesn't work when CR is at the end of one buffer and LF at the
     // beginning of the next one.

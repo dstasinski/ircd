@@ -56,7 +56,8 @@ void event_dispatch_event(event_flags flags, event_callback_data *callback_data)
 
 void event_register_handlers()
 {
-    event_register_handler(event_flags_data, client_callback_data);
+    event_register_handler(event_flags_data_in, client_callback_data_in);
+    event_register_handler(event_flags_data_out, send_callback_data_out);
 }
 
 void event_start_loop(int serverfd, int epollfd)
@@ -88,7 +89,9 @@ void event_start_loop(int serverfd, int epollfd)
                 callback_data.buffer = NULL;
                 callback_data.buffer_length = 0;
                 
-                if (events[i].events & EPOLLERR || events[i].events & EPOLLHUP || !(events[i].events & EPOLLIN))
+                // TODO: Clean up, merge with the other disconnect so that
+                // the disconnect event is dispatched
+                if (events[i].events & EPOLLERR || events[i].events & EPOLLHUP || !(events[i].events & (EPOLLIN | EPOLLOUT)))
                 {
                     /* An error occurred on this socket (or disconnected) */
                     info_print_format("Socket error at event %d, fd: %d", i, client_event_data->fd);
@@ -133,55 +136,64 @@ void event_start_loop(int serverfd, int epollfd)
                 }
                 else
                 {
-                    /* Data available at this socket */
-                    ssize_t read_size;
-                    char buffer[512];
                     int disconnect = 0;
-                    while (1)
+                    if (events[i].events & EPOLLIN)
                     {
-                        read_size = read(client_event_data->fd, buffer, sizeof(buffer));
-                        if (read_size < 0)
+                        /* Data available at this socket */
+                        ssize_t read_size;
+                        char buffer[512];
+                        while (1)
                         {
-                            // EAGAIN or EWOULDBLOCK means all available data 
-                            // has been read, everything else is an error
-                            // in which case we disconnect this client
-                            if (errno != EAGAIN && errno != EWOULDBLOCK)
+                            read_size = read(client_event_data->fd, buffer, sizeof(buffer));
+                            if (read_size < 0)
                             {
-                                // Ignore the error if the client sent QUIT
-                                // (or is quitting for some other reason)
-                                if (client_event_data->quitting == 0)
+                                // EAGAIN or EWOULDBLOCK means all available data 
+                                // has been read, everything else is an error
+                                // in which case we disconnect this client
+                                if (errno != EAGAIN && errno != EWOULDBLOCK)
                                 {
-                                    error_print("read");
+                                    // Ignore the error if the client sent QUIT
+                                    // (or is quitting for some other reason)
+                                    if (client_event_data->quitting == 0)
+                                    {
+                                        error_print("read");
+                                    }
+                                    disconnect = 1;
                                 }
-                                disconnect = 1;
+                                break;
                             }
-                            break;
-                        }
-                        
-                        if (read_size == 0)
-                        {
-                            /* EOF, connection was closed */
-                            disconnect = 1;
-                            break;
-                        }
-                        else
-                        {
-                            // TODO: Proper fix for this
-                            if (read_size == 1 && buffer[0] == 0x04)
+
+                            if (read_size == 0)
                             {
-                                /* Ctrl-D = EOT (0x04, End of Transmission) */
+                                /* EOF, connection was closed */
                                 disconnect = 1;
                                 break;
                             }
-                            
-                            // TODO: line splitting etc
-                            buffer[read_size] = '\0';
-                            
-                            callback_data.buffer = buffer;
-                            callback_data.buffer_length = read_size;
-                            event_dispatch_event(event_flags_data, &callback_data);
+                            else
+                            {
+                                // TODO: Proper fix for this
+                                if (read_size == 1 && buffer[0] == 0x04)
+                                {
+                                    /* Ctrl-D = EOT (0x04, End of Transmission) */
+                                    disconnect = 1;
+                                    break;
+                                }
+
+                                // TODO: line splitting etc
+                                buffer[read_size] = '\0';
+
+                                callback_data.buffer = buffer;
+                                callback_data.buffer_length = read_size;
+                                event_dispatch_event(event_flags_data_in, &callback_data);
+                            }
                         }
                     }
+                    if (events[i].events & EPOLLOUT)
+                    {
+                        // TODO: Set disconnect to 1 in case of write error
+                        event_dispatch_event(event_flags_data_out, &callback_data);
+                    }
+                    
                     if (disconnect)
                     {
                         // TODO: Reorder operations?

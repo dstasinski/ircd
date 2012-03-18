@@ -14,7 +14,8 @@ typedef enum event_flags
     event_flags_timeout         = 1,
     event_flags_connect         = 2,
     event_flags_disconnect      = 4,
-    event_flags_data            = 8,
+    event_flags_data_in         = 8,
+    event_flags_data_out        = 16,
 } event_flags;
 
 typedef struct event_callback_data

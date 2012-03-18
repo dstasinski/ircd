@@ -1,5 +1,6 @@
 #include "../commands.h"
 #include "../util.h"
+#include "../send.h"
 
 int command_nick(message_callback_data *e)
 {
@@ -13,6 +14,8 @@ int command_nick(message_callback_data *e)
     }
     
     client_set_nickname(e->event_data->client, e->message_data->argv[0]);
+    
+    send_message_client(e->event_data->client, "Hey there\r\n");
     
     return 0;
 }
