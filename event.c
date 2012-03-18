@@ -142,10 +142,10 @@ void event_start_loop(int serverfd, int epollfd)
                         read_size = read(client_event_data->fd, buffer, sizeof(buffer));
                         if (read_size < 0)
                         {
-                            /* EAGAIN means all available data has been read, 
-                             * everything else is an error
-                             */
-                            if (errno != EAGAIN)
+                            // EAGAIN or EWOULDBLOCK means all available data 
+                            // has been read, everything else is an error
+                            // in which case we disconnect this client
+                            if (errno != EAGAIN && errno != EWOULDBLOCK)
                             {
                                 // Ignore the error if the client sent QUIT
                                 // (or is quitting for some other reason)
