@@ -39,3 +39,7 @@ Roadmap
   - more const qualifiers etc to make the code more robust
   - static analysis
   - turn warning into errors, more compiler flags (optimizations etc)
+  - create header with type definitions (length_t = uint, ...) to clean up code and use proper signed/unsigned types
+    - ^ clean up size_t and ssize_t usage
+  - unify comment styles - // for normal comments, including multiline, /** * */ for doxygen comments
+  - clean up event.c - split the big epoll_wait loop into multiple functions (in handling, out handling, new connection handling, ...)
