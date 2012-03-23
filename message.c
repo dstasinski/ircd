@@ -4,6 +4,7 @@
 
 #include "message.h"
 #include "util.h"
+#include "common.h"
 
 message_data *message_parse(char *buffer)
 {

@@ -5,12 +5,18 @@
 int command_nick(message_callback_data *e)
 {
     // TODO: Check valid nick
-    // TODO: Check nickname not in use
     
     if (e->message_data->argc < 1)
     {
         // TODO: Reply system for errors
-        return 1;
+        return -1;
+    }
+    
+    if (client_nickname_hashtable_find(e->message_data->argv[0]) != NULL)
+    {
+        // TODO: Proper error response
+        send_message_client(e->event_data->client, "Already taken...\r\n");
+        return -1;
     }
     
     client_set_nickname(e->event_data->client, e->message_data->argv[0]);
@@ -25,12 +31,12 @@ int command_user(message_callback_data *e)
     if (e->message_data->argc < 1)
     {
         // TODO: Reply system for errors
-        return 1;
+        return -1;
     }
     if (e->event_data->client->registered != 0)
     {
         // TODO: ^
-        return 2;
+        return -1;
     }
     
     client_set_username(e->event_data->client, e->message_data->argv[0]);   

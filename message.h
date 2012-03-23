@@ -36,8 +36,6 @@ typedef struct message_handler
     struct message_handler *next;
 } message_handler;
 
-#define MESSAGE_HANDLER_HASHTABLE_SIZE  64
-
 void message_register_handler(const char *command, message_callback_func callback);
 void message_dispatch_command(const char *command, message_callback_data *data);
 

@@ -23,15 +23,17 @@ typedef struct client_data
     struct client_data *prev;
     struct client_data *next;
     
+    // Nickname hashtable
+    char *nickname;
+    struct client_data *nickname_next;
+    struct client_data *nickname_prev;
+    
     // User data
     int registered;
-    char *nickname;
     char *username;
     int quitting;
     
 } client_data;
-
-extern client_data *clients;
 
 client_data *client_allocate_new();
 void client_delete(client_data *client_data);
@@ -39,6 +41,8 @@ void client_delete(client_data *client_data);
 // TODO: Maybe move somewhere else to remove dependency cycle
 typedef struct event_callback_data event_callback_data;
 int client_callback_data_in(event_callback_data *e);
+
+client_data *client_nickname_hashtable_find(char *nickname);
 
 void client_set_nickname(client_data *client, const char *nickname);
 void client_set_username(client_data *client, const char *username);

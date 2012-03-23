@@ -7,8 +7,13 @@
 #include "message.h"
 #include "util.h"
 #include "send.h"
+#include "common.h"
 
-client_data *clients = NULL;
+void client_nickname_hashtable_add(client_data *client);
+void client_nickname_hashtable_remove(client_data *client);
+
+static client_data *clients = NULL;
+static client_data *client_nickname[CLIENT_NICKNAME_HASHTABLE_SIZE];
 
 client_data *client_allocate_new()
 {
@@ -24,8 +29,11 @@ client_data *client_allocate_new()
     client->prev = NULL;
     client->next = clients;
     
-    client->registered = 0;
     client->nickname = NULL;
+    client->nickname_next = NULL;
+    client->nickname_prev = NULL;
+    
+    client->registered = 0;
     client->username = NULL;
     client->quitting = 0;
     
@@ -51,6 +59,9 @@ void client_delete(client_data* client)
     {
         send_delete_queue(client->send_queue_start);
     }
+    
+    // Remove from nickname hashtable
+    client_nickname_hashtable_remove(client);
     
     // TODO: static allocation, or macros or something to avoid this mess
     if (client->nickname != NULL)
@@ -122,14 +133,62 @@ int client_callback_data_in(event_callback_data *e)
     return 0;
 }
 
+// TODO: Lowercase (RFC lowercase!) hashing and comparison
+
+void client_nickname_hashtable_add(client_data *client)
+{
+    int bucket = hash(client->nickname) % CLIENT_NICKNAME_HASHTABLE_SIZE;
+    
+    if (client_nickname[bucket] == NULL)
+    {
+        client_nickname[bucket] = client;
+    }
+    else
+    {
+        client->nickname_next = client_nickname[bucket];
+        client_nickname[bucket] = client;
+    }
+}
+
+void client_nickname_hashtable_remove(client_data *client)
+{
+    if (client->nickname_prev == NULL)
+    {
+        client_nickname[hash(client->nickname) % CLIENT_NICKNAME_HASHTABLE_SIZE] = client->nickname_next;
+    }
+    else
+    {
+        client->nickname_prev->nickname_next = client->nickname_next;
+    }
+}
+
+client_data *client_nickname_hashtable_find(char *nickname)
+{
+    client_data *client = client_nickname[hash(nickname) % CLIENT_NICKNAME_HASHTABLE_SIZE];
+    while (client != NULL)
+    {
+        if (strcmp(client->nickname, nickname) == 0)
+        {
+            return client;
+        }
+        client = client->nickname_next;
+    }
+    
+    return NULL;
+}
+
 void client_set_nickname(client_data *client, const char *nickname)
 {
     if (client->nickname != NULL)
     {
+        client_nickname_hashtable_remove(client);
         free(client->nickname);
     }
+    
     client->nickname = malloc(sizeof(char)*(strlen(nickname)+1));
     strcpy(client->nickname, nickname);
+    
+    client_nickname_hashtable_add(client);    
 }
 
 void client_set_username(client_data *client, const char *username)
