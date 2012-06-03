@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <netinet/in.h>
-#include <sys/epoll.h>
 #include <errno.h>
 #include <fcntl.h>
 
+#include "common.h"
 #include "socket.h"
 #include "event.h"
 #include "util.h"
@@ -60,151 +60,84 @@ void event_register_handlers()
     event_register_handler(event_flags_data_out, send_callback_data_out);
 }
 
-void event_start_loop(int serverfd, int epollfd)
+void event_start_loop_epoll(int serverfd);
+void event_start_loop_select(int serverfd);
+
+void event_start_loop(int serverfd)
 {
-    struct epoll_event *events = calloc(MAXEVENTS, sizeof(struct epoll_event));
+#ifdef USE_EPOLL
+    event_start_loop_epoll(serverfd);
+#else
+    event_start_loop_select(serverfd);
+#endif
+}
+
+int event_read_available(client_data *client_event_data, event_callback_data *callback_data)
+{
+    ssize_t read_size;
+    char buffer[512];
+    
+    int disconnect = 0;
     
     while (1)
     {
-        int n = epoll_wait(epollfd, events, MAXEVENTS, TIMEOUT);
-        if (n < 0)
+        read_size = read(client_event_data->fd, buffer, sizeof(buffer));
+        if (read_size < 0)
         {
-            error_print_exit("epoll_wait");
+            // EAGAIN or EWOULDBLOCK means all available data 
+            // has been read, everything else is an error
+            // in which case we disconnect this client
+            if (errno != EAGAIN && errno != EWOULDBLOCK)
+            {
+                // Ignore the error if the client sent QUIT
+                // (or is quitting for some other reason)
+                if (client_event_data->quitting == 0)
+                {
+                    error_print("read");
+                }
+                disconnect = 1;
+            }
+            break;
         }
-        
-        if (n == 0)
+
+        if (read_size == 0)
         {
-            /* No events, timed-out */
-            event_dispatch_event(event_flags_timeout, NULL);
+            /* EOF, connection was closed */
+            disconnect = 1;
+            break;
         }
         else
         {
-            for(int i = 0; i < n; i++)
+            if (read_size == 1 && buffer[0] == 0x04)
             {
-                client_data *client_event_data = (client_data *) events[i].data.ptr;
-                
-                event_callback_data callback_data;
-                callback_data.client = client_event_data;
-                callback_data.client_new = NULL;
-                callback_data.buffer = NULL;
-                callback_data.buffer_length = 0;
-                
-                // TODO: Clean up, merge with the other disconnect so that
-                // the disconnect event is dispatched
-                if (events[i].events & EPOLLERR || events[i].events & EPOLLHUP || !(events[i].events & (EPOLLIN | EPOLLOUT)))
-                {
-                    /* An error occurred on this socket (or disconnected) */
-                    info_print_format("Socket error at event %d, fd: %d", i, client_event_data->fd);
-                    close(client_event_data->fd);
-                }
-                else if (client_event_data->fd == serverfd)
-                {
-                    /* Event at the server descriptor - new incoming connection(s) */
-                    while (1)
-                    {
-                        struct sockaddr client_addr;
-                        socklen_t client_addr_len = sizeof(client_addr);
-                        
-                        int clientfd = accept(serverfd, &client_addr, &client_addr_len);
-                        if (clientfd < 0)
-                        {
-                            if (errno == EAGAIN || errno == EWOULDBLOCK)
-                            {
-                                /* All waiting incoming connections have been processed */
-                                break;
-                            }
-                            error_print("accept");
-                            break;
-                        }
-                        
-                        if (socket_set_nonblocking(clientfd) < 0)
-                        {
-                            error_print_exit("socket_set_nonblocking");
-                        }
-                        
-                        client_data *client_new = client_allocate_new();
-                        if (socket_epoll_ctl(clientfd, epollfd, client_new) < 0)
-                        {
-                            error_print_exit("socket_epoll_ctl");
-                        }
-                        
-                        info_print_format("Accepted new connection, fd: %d", clientfd);
-                        
-                        callback_data.client_new = client_new;
-                        event_dispatch_event(event_flags_connect, &callback_data);
-                    }
-                }
-                else
-                {
-                    int disconnect = 0;
-                    if (events[i].events & EPOLLIN)
-                    {
-                        /* Data available at this socket */
-                        ssize_t read_size;
-                        char buffer[512];
-                        while (1)
-                        {
-                            read_size = read(client_event_data->fd, buffer, sizeof(buffer));
-                            if (read_size < 0)
-                            {
-                                // EAGAIN or EWOULDBLOCK means all available data 
-                                // has been read, everything else is an error
-                                // in which case we disconnect this client
-                                if (errno != EAGAIN && errno != EWOULDBLOCK)
-                                {
-                                    // Ignore the error if the client sent QUIT
-                                    // (or is quitting for some other reason)
-                                    if (client_event_data->quitting == 0)
-                                    {
-                                        error_print("read");
-                                    }
-                                    disconnect = 1;
-                                }
-                                break;
-                            }
-
-                            if (read_size == 0)
-                            {
-                                /* EOF, connection was closed */
-                                disconnect = 1;
-                                break;
-                            }
-                            else
-                            {
-                                // TODO: Proper fix for this
-                                if (read_size == 1 && buffer[0] == 0x04)
-                                {
-                                    /* Ctrl-D = EOT (0x04, End of Transmission) */
-                                    disconnect = 1;
-                                    break;
-                                }
-
-                                // TODO: line splitting etc
-                                buffer[read_size] = '\0';
-
-                                callback_data.buffer = buffer;
-                                callback_data.buffer_length = read_size;
-                                event_dispatch_event(event_flags_data_in, &callback_data);
-                            }
-                        }
-                    }
-                    if (events[i].events & EPOLLOUT)
-                    {
-                        // TODO: Set disconnect to 1 in case of write error
-                        event_dispatch_event(event_flags_data_out, &callback_data);
-                    }
-                    
-                    if (disconnect)
-                    {
-                        // TODO: Reorder operations?
-                        info_print_format("Closing connection, fd: %d", client_event_data->fd);
-                        close(client_event_data->fd);
-                        
-                        event_dispatch_event(event_flags_disconnect, &callback_data);
-                        client_delete(client_event_data);
-                    }
-                }
+                /* Ctrl-D = EOT (0x04, End of Transmission) */
+                disconnect = 1;
+                break;
             }
+
+            buffer[read_size] = '\0';
+
+            callback_data->buffer = buffer;
+            callback_data->buffer_length = read_size;
+            event_dispatch_event(event_flags_data_in, callback_data);
         }
     }
+    
+    if (disconnect)
+    {
+        event_disconnect_client(client_event_data, callback_data);
+        
+        return -1;
+    }
+    
+    return 0;    
+}
+
+void event_disconnect_client(client_data *client_event_data, event_callback_data *callback_data)
+{
+    info_print_format("Closing connection, fd: %d", client_event_data->fd);
+    close(client_event_data->fd);
+
+    event_dispatch_event(event_flags_disconnect, callback_data);
+    client_delete(client_event_data);
 }

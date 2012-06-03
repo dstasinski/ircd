@@ -4,8 +4,15 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <sys/epoll.h>
 #include <asm-generic/socket.h>
+#include <errno.h>
+
+#include "common.h"
+#ifdef USE_EPOLL
+    #include <sys/epoll.h>
+#else
+    #include <sys/select.h>
+#endif
 
 #include "socket.h"
 #include "client.h"
@@ -57,7 +64,7 @@ int socket_set_nonblocking(int socketfd)
 
 int socket_listen(int socketfd, int backlog)
 {
-    // Default size for backlog is maximum possible
+    // Default size for backlog is the maximum possible
     if (backlog < 0)
     {
         backlog = SOMAXCONN;
@@ -71,6 +78,7 @@ int socket_listen(int socketfd, int backlog)
     return 0;
 }
 
+#ifdef USE_EPOLL
 int socket_epoll_ctl(int socketfd, int epollfd, client_data *client)
 {
     client->fd = socketfd;
@@ -104,4 +112,29 @@ int socket_epoll_create_and_setup(int socketfd)
     }
     
     return epollfd;
+}
+#endif
+
+int socket_accept_client(int serverfd){
+    struct sockaddr client_addr;
+    socklen_t client_addr_len = sizeof(client_addr);
+
+    int clientfd = accept(serverfd, &client_addr, &client_addr_len);
+    if (clientfd < 0)
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+        {
+            /* All waiting incoming connections have been processed */
+            return 0;
+        }
+        error_print("accept");
+        return -1;
+    }
+
+    if (socket_set_nonblocking(clientfd) < 0)
+    {
+        error_print_exit("socket_set_nonblocking");
+    }
+
+    return clientfd;
 }

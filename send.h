@@ -1,6 +1,8 @@
 #ifndef SEND_H
 #define	SEND_H
 
+#include <unistd.h>
+
 typedef struct send_message_buffer
 {
     char *contents;

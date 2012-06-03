@@ -38,20 +38,13 @@ int main(int argc, char** argv)
         error_print_exit("socket_listen");
     }
     
-    info_print("Creating and setting up epolll descriptor");
-    int epollfd = socket_epoll_create_and_setup(serverfd);
-    if (epollfd < 0)
-    {
-        error_print_exit("socket_epoll_create_and_setup");
-    }
-    
     info_print("Registering event handlers");
     event_register_handlers();
     info_print("Registering command handlers");
     command_register_handlers();
     
     info_print("Entering main event loop");
-    event_start_loop(serverfd, epollfd);
+    event_start_loop(serverfd);
     
     return 0;
 }
