@@ -35,7 +35,7 @@ void event_register_handler(event_flags flags, event_callback_func callback)
     }
 }
 
-void event_dispatch_event(event_flags flags, event_callback_data *callback_data)
+int event_dispatch_event(event_flags flags, event_callback_data *callback_data)
 {
     if (callback_data != NULL)
     {
@@ -47,8 +47,12 @@ void event_dispatch_event(event_flags flags, event_callback_data *callback_data)
     {
         if ((handler->flags & flags) != 0)
         {
-            // TODO: get return value, maybe dispatch error event if result != 0
-            handler->callback(callback_data);
+            int result = handler->callback(callback_data);
+            // On error from some handler stop and return the error code
+            if (result < 0)
+            {
+                return result;
+            }
         }
         handler = handler->next;
     }
