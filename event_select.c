@@ -151,7 +151,10 @@ void event_start_loop_select(int serverfd)
                 
                 if (FD_ISSET(i, &writefds))
                 {
-                    event_dispatch_event(event_flags_data_out, &callback_data);
+                    if (event_dispatch_event(event_flags_data_out, &callback_data) < 0)
+                    {
+                        event_disconnect_client(client_event_data, &callback_data);
+                    }
                 }
             }
         }

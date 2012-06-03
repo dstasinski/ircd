@@ -101,8 +101,11 @@ void event_start_loop_epoll(int serverfd)
                     
                     if (!disconnected && events[i].events & EPOLLOUT)
                     {
-                        // TODO: Set disconnect to 1 in case of write error
-                        event_dispatch_event(event_flags_data_out, &callback_data);
+                        // Disconnect on error
+                        if (event_dispatch_event(event_flags_data_out, &callback_data) < 0)
+                        {
+                            event_disconnect_client(client_event_data, &callback_data);
+                        }
                     }
                 }
             }
