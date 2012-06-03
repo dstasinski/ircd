@@ -20,7 +20,7 @@
 /* Use select by default */
 #ifndef USE_EPOLL
     #ifndef USE_SELECT
-        #define USE_EPOLL
+        #define USE_SELECT
     #endif
 #endif
 
