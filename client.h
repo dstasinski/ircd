@@ -38,6 +38,8 @@ typedef struct client_data
 client_data *client_allocate_new();
 void client_delete(client_data *client_data);
 
+client_data *client_get_first();
+
 struct event_callback_data;
 int client_callback_data_in(struct event_callback_data *e);
 

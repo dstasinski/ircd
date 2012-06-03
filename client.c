@@ -38,12 +38,18 @@ client_data *client_allocate_new()
     client->quitting = 0;
     
     // Prepend to the client list
+    if (clients != NULL)
+    {
+        clients->prev = client;
+    }
     clients = client;
+    
     return client;
 }
 
 void client_delete(client_data* client)
 {
+    info_print_format("mazem %d ->%d root=%d", client->fd, client->next, clients);
     // Remove from the linked list of clients
     if (client->prev != NULL)
     {
@@ -61,7 +67,10 @@ void client_delete(client_data* client)
     }
     
     // Remove from nickname hashtable
-    client_nickname_hashtable_remove(client);
+    if (client->nickname != NULL)
+    {
+        client_nickname_hashtable_remove(client);
+    }
     
     // TODO: static allocation, or macros or something to avoid this mess
     if (client->nickname != NULL)
@@ -74,6 +83,11 @@ void client_delete(client_data* client)
     }
     
     free(client);
+}
+
+client_data *client_get_first()
+{
+    return clients;
 }
 
 int client_callback_data_in(event_callback_data *e)
