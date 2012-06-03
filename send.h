@@ -23,13 +23,12 @@ typedef struct send_queue_element
 void send_delete_queue(send_queue_element *queue_element);
 void send_release_buffer(send_message_buffer *buffer);
 
-// TODO: Fix dependency cycle
-typedef struct client_data client_data;
-typedef struct event_callback_data event_callback_data;
+struct client_data;
+struct event_callback_data;
 
-void send_enqueue_client(client_data *client, send_message_buffer *buffer);
+void send_enqueue_client(struct client_data *client, send_message_buffer *buffer);
 
-void send_message_client(client_data *client, const char *message);
+void send_message_client(struct client_data *client, const char *message);
 
-int send_callback_data_out(event_callback_data *e);
+int send_callback_data_out(struct event_callback_data *e);
 #endif	/* SEND_H */

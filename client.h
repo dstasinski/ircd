@@ -38,9 +38,8 @@ typedef struct client_data
 client_data *client_allocate_new();
 void client_delete(client_data *client_data);
 
-// TODO: Maybe move somewhere else to remove dependency cycle
-typedef struct event_callback_data event_callback_data;
-int client_callback_data_in(event_callback_data *e);
+struct event_callback_data;
+int client_callback_data_in(struct event_callback_data *e);
 
 client_data *client_nickname_hashtable_find(char *nickname);
 
