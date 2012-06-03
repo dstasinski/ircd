@@ -59,6 +59,7 @@ void client_delete(client_data* client)
     {
         clients = client->next;
     }
+    client->next->prev = client->prev;
     
     // Clean up all data stored in this client's client_data
     if (client->send_queue_start != NULL)
