@@ -56,6 +56,8 @@ int event_dispatch_event(event_flags flags, event_callback_data *callback_data)
         }
         handler = handler->next;
     }
+    
+    return 0;
 }
 
 void event_register_handlers()
