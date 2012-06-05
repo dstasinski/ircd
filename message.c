@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "message.h"
 #include "util.h"
@@ -9,12 +10,10 @@
 message_data *message_parse(char *buffer)
 {
     message_data *message = malloc(sizeof(message_data));
-    // TODO: More checks for \0, return null for malformed messages
-    
-    char *start;
+    char *start, *c;
     int length;
     
-    // Check for prefix
+    /* Check for prefix */
     if (*buffer == ':')
     {
         // Move to the first character of the prefix
@@ -35,18 +34,27 @@ message_data *message_parse(char *buffer)
         buffer++; // Move behind the space
     }
     
-    // Parse the command
+    /* Parse the command */
     start = buffer;
     buffer = strchr(buffer, ' ');
     if (buffer == NULL)
     {
         buffer = strchr(start, '\0');
     }
-    // TODO: turn to lowercase
+    
     length = buffer - start;
     strncpy(message->command, start, length);
     message->command[length] = '\0';
     
+    /* Turn to lowercase */
+    c = message->command;
+    while(*c)
+    {
+        *c = tolower(*c);
+        c++;
+    }
+    
+    /* Check for numeric commands */
     message->command_numeric = 0;
     if (length == 3)
     {
@@ -60,7 +68,7 @@ message_data *message_parse(char *buffer)
         buffer++;
     }
     
-    // Parse arguments
+    /* Parse arguments */
     message->argc = 0;
     while(*buffer != '\0')
     {
