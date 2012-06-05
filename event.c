@@ -142,6 +142,8 @@ int event_read_available(client_data *client_event_data, event_callback_data *ca
 void event_disconnect_client(client_data *client_event_data, event_callback_data *callback_data)
 {
     info_print_format("Closing connection, fd: %d", client_event_data->fd);
+    
+    client_event_data->quitting = 1;
     close(client_event_data->fd);
 
     event_dispatch_event(event_flags_disconnect, callback_data);
