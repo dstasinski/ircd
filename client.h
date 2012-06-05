@@ -2,17 +2,14 @@
 #define	CLIENT_H
 
 #include "send.h"
+#include "rfc.h"
 
 typedef struct client_data
 {
     int fd;
     int server;
     
-    // RFC: Messages are max 512 bytes in length, including the CR-LF sequence
-    // Therefore 510 would be enough for a single, separated message but lets
-    // round it up
-    // TODO: make it a constant in some global header file
-    char line_buffer[512];
+    char line_buffer[RFC_MESSAGE_MAXLENGTH];
     int line_buffer_pos;
     
     // Write queue
