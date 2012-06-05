@@ -29,6 +29,7 @@ void send_release_buffer(send_message_buffer *buffer)
         // Delete if this was the last reference to this buffer
         if (buffer->gc_count < 1)
         {
+            free(buffer->contents);
             free(buffer);
         }
     }
@@ -61,7 +62,7 @@ void send_message_client(client_data *client, const char *message)
     buffer->contents_length = strlen(message);
     buffer->contents = malloc(sizeof(char)*buffer->contents_length);
     memcpy(buffer->contents, message, buffer->contents_length);
-    buffer->gc_count = 1;
+    buffer->gc_count = 0;
     
     send_enqueue_client(client, buffer);    
 }
