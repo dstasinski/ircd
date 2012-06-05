@@ -1,13 +1,10 @@
 * New, sorted, cleaned list for project *
 - ignore the rest for now, after submitting make the formatting better and put it to a public repo
 
-- output functions for error handling
+- output functions for error handling/message responses/message forwarding
 - privmsg command to user
 - channel support
 - privmsg to channel
-- signal management
-  - Ctrl-C will gracefuly close connections and shut down server
-  - check for problems with select/epoll_wait/send/recv (might need signal masks)
 - command line arguments for address/port
 - deamon support - clean up debug prints to stdout/stderr
 - compile flags - optimizations, Werror, strict, ...
