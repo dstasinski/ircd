@@ -12,6 +12,7 @@
 #include "client.h"
 
 event_handler *event_handlers = NULL;
+int event_shutting_down = 0;
 
 void event_register_handler(event_flags flags, event_callback_func callback)
 {
@@ -76,6 +77,23 @@ void event_start_loop(int serverfd)
 #else
     event_start_loop_select(serverfd);
 #endif
+}
+
+void event_initiate_shutdown()
+{
+    event_shutting_down = 1;
+    client_data *client = client_get_first();
+    client_data *tmp;
+    while (client != NULL)
+    {
+        tmp = client;
+        client = client->next;
+        
+        if (!tmp->server)
+        {
+            event_disconnect_client(tmp, NULL);
+        }
+    }
 }
 
 int event_read_available(client_data *client_event_data, event_callback_data *callback_data)
@@ -146,6 +164,10 @@ void event_disconnect_client(client_data *client_event_data, event_callback_data
     client_event_data->quitting = 1;
     close(client_event_data->fd);
 
-    event_dispatch_event(event_flags_disconnect, callback_data);
+    if (event_shutting_down == 0 && callback_data != NULL)
+    {
+        event_dispatch_event(event_flags_disconnect, callback_data);
+    }
+    
     client_delete(client_event_data);
 }

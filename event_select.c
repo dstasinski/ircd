@@ -25,7 +25,7 @@ void event_start_loop_select(int serverfd)
     // Lookup table: fd -> client_data*
     client_data *clients [FD_SETSIZE];
     
-    while (1)
+    while (event_shutting_down == 0)
     {
         FD_ZERO(&readfds);
         FD_ZERO(&writefds);
@@ -69,6 +69,12 @@ void event_start_loop_select(int serverfd)
         int n = select(maxfd+1, &readfds, &writefds, &exceptfds, &timeout);
         if (n < 0)
         {
+            /* Interrupted - probably got SIGINT */
+            if (errno == EINTR)
+            {
+                continue;
+            }
+            
             error_print_exit("select");
         }
         
@@ -157,5 +163,7 @@ void event_start_loop_select(int serverfd)
             }
         }
     }
+    
+    close(serverfd);
 }
 #endif

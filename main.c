@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <string.h>
 
+#include "signal.h"
 #include "socket.h"
 #include "util.h"
 #include "event.h"
@@ -42,9 +43,13 @@ int main(int argc, char** argv)
     info_print("Registering command handlers");
     command_register_handlers();
     
+    info_print("Registering signal handlers");
+    signal_register_handlers();
+    
     info_print("Entering main event loop");
     event_start_loop(serverfd);
     
-    return 0;
+    info_print("Shutdown complete");
+    return EXIT_SUCCESS;
 }
 

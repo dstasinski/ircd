@@ -43,7 +43,10 @@ void event_register_handler(event_flags flags, event_callback_func callback);
 int event_dispatch_event(event_flags flags, event_callback_data *callback_data);
 void event_register_handlers();
 
+extern int event_shutting_down;
+
 void event_start_loop(int serverfd);
+void event_initiate_shutdown();
 
 int event_read_available(client_data *client_event_data, event_callback_data *callback_data);
 void event_disconnect_client(client_data *client_event_data, event_callback_data *callback_data);

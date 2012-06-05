@@ -25,11 +25,17 @@ void event_start_loop_epoll(int serverfd)
     
     struct epoll_event *events = calloc(MAXEVENTS, sizeof(struct epoll_event));    
 
-    while (1)
+    while (event_shutting_down == 0)
     {
         int n = epoll_wait(epollfd, events, MAXEVENTS, TIMEOUT);
         if (n < 0)
         {
+            /* Interrupted - probably got SIGINT */
+            if (errno == EINTR)
+            {
+                continue;
+            }
+            
             error_print_exit("epoll_wait");
         }
         
@@ -111,5 +117,8 @@ void event_start_loop_epoll(int serverfd)
             }
         }
     }
+    
+    close(epollfd);
+    close(serverfd);
 }
 #endif
