@@ -97,9 +97,6 @@ client_data *client_get_first()
 
 int client_callback_data_in(event_callback_data *e)
 {
-    // TODO: Doesn't work when CR is at the end of one buffer and LF at the
-    // beginning of the next one.
-    
     const char *start = e->buffer;
     const char *pos = start+1;
     for(int i = 1; i < e->buffer_length; i++)

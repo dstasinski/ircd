@@ -6,4 +6,3 @@
 #define RFC_MAX_ARGUMENTS       16
 
 #endif	/* RFC_H */
-
