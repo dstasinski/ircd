@@ -113,11 +113,9 @@ void event_start_loop_select(int serverfd)
                 
                 if (FD_ISSET(i, &readfds))
                 {
-                    info_print_format("read at %d", i);
                     /* Client waiting to connect */
                     if (i == serverfd)
                     {
-                        info_print("accepting");
                         while (1)
                         {
                             int clientfd = socket_accept_client(serverfd);
