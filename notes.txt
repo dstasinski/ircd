@@ -76,3 +76,4 @@ COMPILATION / LINKING flags:
   - DEBUG_PRINT_BACKTRACE
 - linker flags:
   -rdynamic 
+-fprofile-arcs -ftest-coverage
