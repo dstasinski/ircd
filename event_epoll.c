@@ -114,6 +114,11 @@ void event_start_loop_epoll(int serverfd)
                         }
                     }
                 }
+                
+                if (client_event_data->quitting)
+                {
+                    client_delete(client_event_data);
+                }
             }
         }
     }

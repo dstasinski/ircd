@@ -24,6 +24,7 @@ void event_start_loop_select(int serverfd)
     
     // Lookup table: fd -> client_data*
     client_data *clients [FD_SETSIZE];
+    clients[serverfd] = NULL;
     
     while (event_shutting_down == 0)
     {
@@ -160,6 +161,12 @@ void event_start_loop_select(int serverfd)
                         event_disconnect_client(client_event_data, &callback_data);
                     }
                 }
+                
+                if (client_event_data != NULL && client_event_data->quitting)
+                {
+                    client_delete(client_event_data);
+                }
+                
             }
         }
     }

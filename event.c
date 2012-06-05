@@ -168,6 +168,4 @@ void event_disconnect_client(client_data *client_event_data, event_callback_data
     {
         event_dispatch_event(event_flags_disconnect, callback_data);
     }
-    
-    client_delete(client_event_data);
 }
