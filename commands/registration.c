@@ -8,27 +8,33 @@ int command_nick(message_callback_data *e)
     
     if (e->message_data->argc < 1)
     {
-        // TODO: Reply system for errors
+        command_user_reply(e, "431 :No nickname given");
         return -1;
     }
     
     if (client_nickname_hashtable_find(e->message_data->argv[0]) != NULL)
     {
-        // TODO: Proper error response
-        send_message_client(e->event_data->client, "Already taken...\r\n");
+        command_user_reply_format(e, ":server 433 %s :Nickname is already in use", e->message_data->argv[0]);
         return -1;
     }
     
+    char *oldnick = e->message_data->argv[0];
+    if (e->event_data->client->nickname != NULL)
+    {
+        oldnick = e->event_data->client->nickname;
+    }
+    command_user_reply_format(e, ":%s NICK %s", oldnick, e->message_data->argv[0]);
+    
     client_set_nickname(e->event_data->client, e->message_data->argv[0]);
     
-    send_message_client(e->event_data->client, "Hey there\r\n");
+    e->event_data->client->registered = 1;
     
     return 0;
 }
 
 int command_user(message_callback_data *e)
 {
-    if (e->message_data->argc < 1)
+    /*if (e->message_data->argc < 1)
     {
         // TODO: Reply system for errors
         return -1;
@@ -47,6 +53,6 @@ int command_user(message_callback_data *e)
         e->event_data->client->registered = 1;
         info_print_format("Client registered! nick: %s, username: %s", e->event_data->client->nickname, e->event_data->client->username);
     }
-    
+    */
     return 0;
 }
