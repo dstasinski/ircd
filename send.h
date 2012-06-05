@@ -2,13 +2,14 @@
 #define	SEND_H
 
 #include <unistd.h>
+#include <stdarg.h>
 
 typedef struct send_message_buffer
 {
     char *contents;
     size_t contents_length;
     
-    // Number of send queues this buffer is in
+    // Number of send queues this buffer is in (reference counting for GC)
     int gc_count;
 } send_message_buffer;
 
@@ -29,7 +30,11 @@ struct client_data;
 struct event_callback_data;
 
 void send_enqueue_client(struct client_data *client, send_message_buffer *buffer);
+send_message_buffer *send_create_buffer(char *message);
+send_message_buffer *send_create_buffer_format(const char *format, ...);
 
+// Helper function, creates a copy of message,
+// caller must call free or use compile-time string
 void send_message_client(struct client_data *client, const char *message);
 
 int send_callback_data_out(struct event_callback_data *e);

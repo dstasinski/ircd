@@ -2,11 +2,13 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "send.h"
 #include "client.h"
 #include "event.h"
 #include "util.h"
+#include "rfc.h"
 
 void send_delete_queue(send_queue_element *queue_element)
 {
@@ -54,6 +56,41 @@ void send_enqueue_client(client_data *client, send_message_buffer *buffer)
         client->send_queue_end->next = queue_element;
         client->send_queue_end = queue_element;
     }
+}
+
+send_message_buffer *send_create_buffer(char* message)
+{
+    send_message_buffer *buffer = malloc(sizeof(send_message_buffer));
+    buffer->contents_length = strlen(message);
+    buffer->contents = message;
+    buffer->gc_count = 0;
+    
+    return buffer;
+}
+
+send_message_buffer *send_create_buffer_format(const char* format, ...)
+{
+    send_message_buffer *buffer = malloc(sizeof(send_message_buffer));
+    buffer->gc_count = 0;
+    
+    buffer->contents = malloc(sizeof(char)*RFC_MESSAGE_MAXLENGTH);
+    
+    va_list args;
+    va_start(args, format);
+    
+    int length = vsprintf(buffer->contents, format, args);
+    
+    va_end(args);
+    
+    if (buffer->contents[length-2] != '\r' || buffer->contents[length-1] != '\n')
+    {
+        buffer->contents[length] = '\r';
+        buffer->contents[length+1] = '\n';
+        length += 2;
+    }
+    
+    buffer->contents_length = length;    
+    return buffer;
 }
 
 void send_message_client(client_data *client, const char *message)
