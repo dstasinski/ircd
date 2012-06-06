@@ -2,6 +2,7 @@
 
 #include "../commands.h"
 #include "../client.h"
+#include "../channel.h"
 
 int command_privmsg(message_callback_data* e)
 {
@@ -26,11 +27,28 @@ int command_privmsg(message_callback_data* e)
     
     if (e->message_data->argv[0][0] == '#')
     {
-        /* Channel */
+        /* Channel message */
+        channel_data *channel = channel_hashtable_find(e->message_data->argv[0]);
+        if (channel == NULL)
+        {
+            command_user_reply_format(e, "403 %s :No such channel", e->message_data->argv[0]);
+            return -1;
+        }
+        
+        // Can't use send_enqueue_channel because we need to skip the sender
+        channel_client *c_client = channel->clients;
+        while(c_client != NULL)
+        {
+            if (c_client->client != e->event_data->client)
+            {
+                send_enqueue_client(c_client->client, buffer);
+            }
+            c_client = c_client->next;
+        }
     }
     else 
     {
-        /* User */
+        /* User message */
         client_data *target = client_nickname_hashtable_find(e->message_data->argv[0]);
         if (target == NULL)
         {
