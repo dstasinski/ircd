@@ -22,6 +22,11 @@ int command_join(message_callback_data *e)
         return -1;
     }
     
+    if (e->message_data->argv[0][0] != '#')
+    {
+        command_user_reply_format(e, "403 %s :No such channel", e->message_data->argv[0]);
+        return -1;
+    }
     
     channel_data *channel = channel_hashtable_find(e->message_data->argv[0]);
     if (channel == NULL)

@@ -1,14 +1,19 @@
+#include <string.h>
+
 #include "../commands.h"
 #include "../util.h"
 #include "../send.h"
 
 int command_nick(message_callback_data *e)
 {
-    // TODO: Check valid nick
-    
     if (e->message_data->argc < 1)
     {
         command_user_reply(e, "431 :No nickname given");
+        return -1;
+    }
+    if (e->message_data->argv[0][0] == '#' || strcmp(e->message_data->argv[0], "server") == 0)
+    {
+        command_user_reply(e, "431 :Invalid nickname"); // No proper error code in RFC
         return -1;
     }
     
@@ -25,10 +30,27 @@ int command_nick(message_callback_data *e)
     }
     command_user_reply_format(e, ":%s NICK %s", oldnick, e->message_data->argv[0]);
     
-    client_set_nickname(e->event_data->client, e->message_data->argv[0]);
-    // TODO: inform channels of nick change
+    if (e->event_data->client->registered == 1)
+    {
+        /* Inform clients on channels */
+        client_channel *c_channel = e->event_data->client->channels;
+        send_message_buffer *buffer = NULL;
+        while(c_channel != NULL)
+        {
+            if (buffer == NULL)
+            {
+                buffer = send_create_buffer_format(":%s NICK %s", oldnick, e->message_data->argv[0]);
+            }
+            send_enqueue_channel(c_channel->channel, buffer);
+            c_channel = c_channel->next;
+        }
+    }
+    else
+    {
+        e->event_data->client->registered = 1;   
+    }
     
-    e->event_data->client->registered = 1;
+    client_set_nickname(e->event_data->client, e->message_data->argv[0]);
     
     return 0;
 }
