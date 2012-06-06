@@ -31,6 +31,7 @@ struct event_callback_data;
 
 void send_enqueue_client(struct client_data *client, send_message_buffer *buffer);
 send_message_buffer *send_create_buffer(char *message);
+send_message_buffer *send_create_buffer_copy(char *message);
 send_message_buffer *send_create_buffer_format(const char *format, ...);
 
 // Helper function, creates a copy of message,

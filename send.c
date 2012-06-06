@@ -68,6 +68,17 @@ send_message_buffer *send_create_buffer(char* message)
     return buffer;
 }
 
+send_message_buffer *send_create_buffer_copy(char* message)
+{
+    send_message_buffer *buffer = malloc(sizeof(send_message_buffer));
+    buffer->contents_length = strlen(message);
+    buffer->contents = malloc(sizeof(char)*buffer->contents_length);
+    memcpy(buffer->contents, message, buffer->contents_length);
+    buffer->gc_count = 0;
+    
+    return buffer;
+}
+
 send_message_buffer *send_create_buffer_format(const char* format, ...)
 {
     send_message_buffer *buffer = malloc(sizeof(send_message_buffer));
