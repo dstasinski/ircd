@@ -18,7 +18,7 @@ int command_privmsg(message_callback_data *e);
 // Channels
 int command_join(message_callback_data *e);
 int command_part(message_callback_data *e);
-//int command_who(message_callback_data *e);
+int command_who(message_callback_data *e);
 
 
 #define command_user_reply(e,message) send_enqueue_client((e)->event_data->client, send_create_buffer_format((message)))

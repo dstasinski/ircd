@@ -12,4 +12,5 @@ void command_register_handlers()
     
     message_register_handler("join", command_join);
     message_register_handler("part", command_part);
+    message_register_handler("who", command_who);
 }
