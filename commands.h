@@ -12,6 +12,9 @@ int command_user(message_callback_data *e);
 // Quit
 int command_quit(message_callback_data *e);
 
+// Messaging
+int command_privmsg(message_callback_data *e);
+
 #define command_user_reply(e,message) send_enqueue_client((e)->event_data->client, send_create_buffer_format((message)))
 #define command_user_reply_format(e,format,...) send_enqueue_client((e)->event_data->client, send_create_buffer_format((format), __VA_ARGS__))
 

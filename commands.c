@@ -7,4 +7,6 @@ void command_register_handlers()
     message_register_handler("user", command_user);
     
     message_register_handler("quit", command_quit);
+    
+    message_register_handler("privmsg", command_privmsg);
 }
