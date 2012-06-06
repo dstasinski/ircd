@@ -26,6 +26,7 @@ int command_nick(message_callback_data *e)
     command_user_reply_format(e, ":%s NICK %s", oldnick, e->message_data->argv[0]);
     
     client_set_nickname(e->event_data->client, e->message_data->argv[0]);
+    // TODO: inform channels of nick change
     
     e->event_data->client->registered = 1;
     

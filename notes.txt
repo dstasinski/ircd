@@ -1,8 +1,6 @@
 * New, sorted, cleaned list for project *
 - ignore the rest for now, after submitting make the formatting better and put it to a public repo
 
-- output functions for error handling/message responses/message forwarding
-- privmsg command to user
 - channel support
 - privmsg to channel
 - command line arguments for address/port
