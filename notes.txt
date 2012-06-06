@@ -2,7 +2,6 @@
 - ignore the rest for now, after submitting make the formatting better and put it to a public repo
 
 - channel topic
-- command line arguments for address/port
 - daemon support
 
 - compile flags - optimizations, Werror, strict, ...
