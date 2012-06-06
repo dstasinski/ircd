@@ -96,22 +96,9 @@ void event_start_loop_epoll(int serverfd)
                 }
                 else
                 {
-                    int disconnected = 0;
                     if (events[i].events & EPOLLIN)
                     {
-                        if (event_read_available(client_event_data, &callback_data) < 0)
-                        {
-                            disconnected = 1;
-                        }
-                    }
-                    
-                    if (!disconnected && events[i].events & EPOLLOUT)
-                    {
-                        // Disconnect on error
-                        if (event_dispatch_event(event_flags_data_out, &callback_data) < 0)
-                        {
-                            event_disconnect_client(client_event_data, &callback_data);
-                        }
+                        event_read_available(client_event_data, &callback_data);
                     }
                 }
                 
@@ -120,6 +107,28 @@ void event_start_loop_epoll(int serverfd)
                     client_delete(client_event_data);
                 }
             }
+        }
+        
+        // Write send queues, if any
+        client_data *client_event_data = client_get_first();
+        while (client_event_data != NULL)
+        {
+            if (!client_event_data->quitting && client_event_data->send_queue_start != NULL)
+            {
+                event_callback_data callback_data;
+                callback_data.client = client_event_data;
+                callback_data.client_new = NULL;
+                callback_data.buffer = NULL;
+                callback_data.buffer_length = 0;
+                
+                // Disconnect on error
+                if (event_dispatch_event(event_flags_data_out, &callback_data) < 0)
+                {
+                    event_disconnect_client(client_event_data, &callback_data);
+                }
+            }
+            
+            client_event_data = client_event_data->next;
         }
     }
     
