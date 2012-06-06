@@ -5,6 +5,12 @@
 
 int command_privmsg(message_callback_data* e)
 {
+    if (e->event_data->client->registered != 1)
+    {
+        command_user_reply(e, "451 :You have not registered");
+        return -1;
+    }
+    
     if (e->message_data->argc < 1)
     {
         command_user_reply(e, "411 :No recipient");

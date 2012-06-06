@@ -7,5 +7,4 @@
 #define RFC_MESSAGE_MAXLENGTH   512
 
 
-
 #endif	/* RFC_H */
