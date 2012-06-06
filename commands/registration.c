@@ -19,7 +19,7 @@ int command_nick(message_callback_data *e)
     
     if (client_nickname_hashtable_find(e->message_data->argv[0]) != NULL)
     {
-        command_user_reply_format(e, ":server 433 %s :Nickname is already in use", e->message_data->argv[0]);
+        command_user_reply_format(e, ":server 433 * %s :Nickname is already in use", e->message_data->argv[0]);
         return -1;
     }
     
@@ -28,11 +28,10 @@ int command_nick(message_callback_data *e)
     {
         oldnick = e->event_data->client->nickname;
     }
-    command_user_reply_format(e, ":%s NICK %s", oldnick, e->message_data->argv[0]);
     
     if (e->event_data->client->registered == 1)
     {
-        /* Inform clients on channels */
+        /* Nickname change - inform clients on channels */
         client_channel *c_channel = e->event_data->client->channels;
         send_message_buffer *buffer = NULL;
         while(c_channel != NULL)
@@ -47,6 +46,10 @@ int command_nick(message_callback_data *e)
     }
     else
     {
+        /* First successful nick command, send welcome message (some clients
+         * seem to require this)
+         */
+        command_user_reply_format(e, ":server 001 %s :Welcome!", e->message_data->argv[0]);
         e->event_data->client->registered = 1;   
     }
     
