@@ -148,6 +148,7 @@ int client_callback_data_in(event_callback_data *e)
 {
     const char *start = e->buffer;
     const char *pos = start+1;
+    message_callback_data callback_data;
     for(int i = 1; i < e->buffer_length; i++)
     {
         if (*(pos-1) == '\r' && *pos == '\n')
@@ -172,12 +173,9 @@ int client_callback_data_in(event_callback_data *e)
             {
                 debug_print_format("Command [%s], argc=%d", message->command, message->argc);
                 
-                // TODO: Make static / reuse inside the function / something else
-                message_callback_data *callback_data = malloc(sizeof(message_callback_data));
-                callback_data->event_data = e;
-                callback_data->message_data = message;
-                message_dispatch_command(message->command, callback_data);
-                free(callback_data);
+                callback_data.event_data = e;
+                callback_data.message_data = message;
+                message_dispatch_command(message->command, &callback_data);
             }
             
             // Clean up
