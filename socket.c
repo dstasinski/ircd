@@ -18,7 +18,7 @@
 #include "client.h"
 #include "util.h"
 
-int socket_create_and_bind(unsigned long addr, unsigned short port)
+int socket_create_and_bind(in_addr_t addr, unsigned short port)
 {
     // Get an INET+STREAM socket (TCP/IP)
     int socketfd = socket(AF_INET, SOCK_STREAM, 0);

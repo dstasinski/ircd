@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -19,10 +21,14 @@ int main(int argc, char** argv)
 {    
     
     unsigned short port = LISTEN_PORT;
-    unsigned long addr = LISTEN_ADDRESS;
+    struct in_addr addr;
+    addr.s_addr = LISTEN_ADDRESS;
     
     /* Command line options */
-#if _POSIX_C_SOURCE >= 2 || _XOPEN_SOURCE
+    // _BSD_SOURCE required for inet_aton()
+    // getopt() needs _POSIX_C_SOURCE >= 2 or _XOPEN_SOURCE
+    
+#if defined _BSD_SOURCE && (_POSIX_C_SOURCE >= 2 || defined _XOPEN_SOURCE)
     int opt;
     while ((opt = getopt(argc, argv, "va:p:")) != -1)
     {
@@ -32,9 +38,14 @@ int main(int argc, char** argv)
                 debug_set_verbose(1);
                 break;
             case 'a': /* Address */
-                printf("a:[%s]", optarg);
+                if (inet_aton(optarg, &addr) == 0)
+                {
+                    fprintf(stderr, "%s: invalid address -- '%s'\n", argv[0], optarg);
+                    exit(EXIT_FAILURE);
+                }
                 break;
             case 'p':
+                port = atoi(optarg);
                 break;
             case '?':
                 fprintf(stderr, "%s: invalid option -- '%c'\n", argv[0], optopt);
@@ -46,11 +57,11 @@ int main(int argc, char** argv)
     }
 #else
 #warning "getopt not available. Will use default values."
-#warning "getopt requires _XOPEN_SOURCE or _POSIX_C_SOURCE >= 2"
+#warning "getopt requires _BSD_SOURCE && (_POSIX_C_SOURCE >= 2 || _XOPEN_SOURCE)" 
 #endif
     
     info_print_format("Starting server at port %d", port);
-    int serverfd = socket_create_and_bind(addr, port);
+    int serverfd = socket_create_and_bind(addr.s_addr, port);
     if (serverfd < 0)
     {
         error_print_exit("socket_create_and_bind");

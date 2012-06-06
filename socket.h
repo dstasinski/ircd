@@ -1,10 +1,12 @@
 #ifndef SOCKET_H
 #define	SOCKET_H
 
+#include <netinet/in.h>
+
 #include "common.h"
 #include "client.h"
 
-int socket_create_and_bind(unsigned long addr, unsigned short port);
+int socket_create_and_bind(in_addr_t addr, unsigned short port);
 int socket_set_nonblocking(int socketfd);
 int socket_listen(int socketfd, int backlog);
 
