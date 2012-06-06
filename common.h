@@ -2,6 +2,14 @@
 #define	COMMON_H
 
 /* Compile time configuration */
+#ifndef LISTEN_ADDRESS
+    #define LISTEN_ADDRESS  INADDR_ANY
+#endif
+#ifndef LISTEN_PORT
+    #define LISTEN_PORT  6667
+#endif
+
+
 #ifndef MESSAGE_HANDLER_HASHTABLE_SIZE
     #define MESSAGE_HANDLER_HASHTABLE_SIZE  64
 #endif

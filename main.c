@@ -12,15 +12,45 @@
 #include "event.h"
 #include "client.h"
 #include "message.h"
+#include "common.h"
 #include "commands.h"
-
-// TODO: Configuration structure, store stuff like this there at startup
-#define PORT 6667
 
 int main(int argc, char** argv)
 {    
-    info_print_format("Starting server at port %d", PORT);
-    int serverfd = socket_create_and_bind(INADDR_ANY, PORT);
+    
+    unsigned short port = LISTEN_PORT;
+    unsigned long addr = LISTEN_ADDRESS;
+    
+    /* Command line options */
+#if _POSIX_C_SOURCE >= 2 || _XOPEN_SOURCE
+    int opt;
+    while ((opt = getopt(argc, argv, "va:p:")) != -1)
+    {
+        switch(opt)
+        {
+            case 'v': /* Verbose */
+                debug_set_verbose(1);
+                break;
+            case 'a': /* Address */
+                printf("a:[%s]", optarg);
+                break;
+            case 'p':
+                break;
+            case '?':
+                fprintf(stderr, "%s: invalid option -- '%c'\n", argv[0], optopt);
+                fprintf(stderr, "Usage: %s [-v] [-a addr] [-p port]\n", argv[0]);
+                exit(EXIT_FAILURE);
+            default:
+                error_print_exit("getopt");
+        }
+    }
+#else
+#warning "getopt not available. Will use default values."
+#warning "getopt requires _XOPEN_SOURCE or _POSIX_C_SOURCE >= 2"
+#endif
+    
+    info_print_format("Starting server at port %d", port);
+    int serverfd = socket_create_and_bind(addr, port);
     if (serverfd < 0)
     {
         error_print_exit("socket_create_and_bind");
