@@ -6,6 +6,7 @@
 
 #include "send.h"
 #include "client.h"
+#include "channel.h"
 #include "event.h"
 #include "util.h"
 #include "rfc.h"
@@ -55,6 +56,23 @@ void send_enqueue_client(client_data *client, send_message_buffer *buffer)
     {
         client->send_queue_end->next = queue_element;
         client->send_queue_end = queue_element;
+    }
+}
+
+void send_enqueue_channel(struct channel_data *channel, send_message_buffer *buffer)
+{
+    channel_client *client = channel->clients;
+    if (client == NULL)
+    {
+        /* No users, avoid leaking memory */
+        send_release_buffer(buffer);
+        return;
+    }
+    
+    while(client != NULL)
+    {
+        send_enqueue_client(client->client, buffer);
+        client = client->next;
     }
 }
 

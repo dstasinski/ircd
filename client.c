@@ -8,6 +8,7 @@
 #include "util.h"
 #include "send.h"
 #include "common.h"
+#include "channel.h"
 
 void client_nickname_hashtable_add(client_data *client);
 void client_nickname_hashtable_remove(client_data *client);
@@ -33,6 +34,8 @@ client_data *client_allocate_new()
     client->nickname_next = NULL;
     client->nickname_prev = NULL;
     
+    client->channels = NULL;
+    
     client->registered = 0;
     client->username = NULL;
     client->quitting = 0;
@@ -49,7 +52,6 @@ client_data *client_allocate_new()
 
 void client_delete(client_data* client)
 {
-    info_print_format("mazem %d ->%d root=%d", client->fd, client->next, clients);
     // Remove from the linked list of clients
     if (client->prev != NULL)
     {
@@ -70,6 +72,17 @@ void client_delete(client_data* client)
     {
         send_delete_queue(client->send_queue_start);
     }
+    
+    // Remove client from channels
+    client_channel *channel = client->channels;
+    while (channel != NULL)
+    {
+        client_channel *tmp = channel->next;
+        
+        channel_client_part(channel->channel, client);
+        
+        channel = tmp;
+    }   
     
     // Remove from nickname hashtable
     if (client->nickname != NULL)
@@ -93,6 +106,43 @@ void client_delete(client_data* client)
 client_data *client_get_first()
 {
     return clients;
+}
+
+void client_channel_join(client_data *client, channel_data *channel)
+{
+    client_channel *c_channel = malloc(sizeof(client_channel));
+    
+    c_channel->channel = channel;
+    c_channel->next = client->channels;
+    
+    client->channels = c_channel;
+}
+
+int client_channel_part(client_data *client, channel_data *channel)
+{
+    client_channel *c_channel = client->channels;
+    client_channel *prev = NULL;
+    while(c_channel != NULL)
+    {
+        if (c_channel->channel == channel)
+        {
+            if(prev == NULL)
+            {
+                client->channels = c_channel->next;
+            }
+            else
+            {
+                prev->next = c_channel->next;
+            }
+            
+            free (c_channel);
+            return 1;
+        }
+        prev = c_channel;
+        c_channel = c_channel->next;
+    }
+    
+    return 0;
 }
 
 int client_callback_data_in(event_callback_data *e)

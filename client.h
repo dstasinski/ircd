@@ -4,6 +4,14 @@
 #include "send.h"
 #include "rfc.h"
 
+struct channel_data;
+
+typedef struct client_channel
+{
+    struct channel_data *channel;
+    struct client_channel *next;
+} client_channel;
+
 typedef struct client_data
 {
     int fd;
@@ -25,6 +33,9 @@ typedef struct client_data
     struct client_data *nickname_next;
     struct client_data *nickname_prev;
     
+    // Channels
+    client_channel *channels;
+    
     // User data
     int registered;
     char *username;
@@ -36,6 +47,9 @@ client_data *client_allocate_new();
 void client_delete(client_data *client_data);
 
 client_data *client_get_first();
+
+void client_channel_join(client_data *client, struct channel_data *channel);
+int client_channel_part(client_data *client, struct channel_data *channel);
 
 struct event_callback_data;
 int client_callback_data_in(struct event_callback_data *e);

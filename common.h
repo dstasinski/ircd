@@ -10,6 +10,10 @@
     #define CLIENT_NICKNAME_HASHTABLE_SIZE  256
 #endif
 
+#ifndef CHANNEL_HASHTABLE_SIZE
+    #define CHANNEL_HASHTABLE_SIZE  128
+#endif
+
 /* epoll or select */
 #ifdef USE_EPOLL
     #ifdef USE_SELECT
