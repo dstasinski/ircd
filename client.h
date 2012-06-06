@@ -53,6 +53,7 @@ int client_channel_part(client_data *client, struct channel_data *channel);
 
 struct event_callback_data;
 int client_callback_data_in(struct event_callback_data *e);
+int client_callback_disconnect(struct event_callback_data *e);
 
 client_data *client_nickname_hashtable_find(char *nickname);
 

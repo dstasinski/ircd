@@ -65,6 +65,7 @@ void event_register_handlers()
 {
     event_register_handler(event_flags_data_in, client_callback_data_in);
     event_register_handler(event_flags_data_out, send_callback_data_out);
+    event_register_handler(event_flags_disconnect, client_callback_disconnect);
 }
 
 void event_start_loop_epoll(int serverfd);
@@ -147,7 +148,7 @@ int event_read_available(client_data *client_event_data, event_callback_data *ca
         }
     }
     
-    if (disconnect)
+    if (disconnect && client_event_data->quitting == 0)
     {
         event_disconnect_client(client_event_data, callback_data);
         

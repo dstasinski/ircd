@@ -199,6 +199,35 @@ int client_callback_data_in(event_callback_data *e)
     return 0;
 }
 
+int client_callback_disconnect(event_callback_data *e)
+{
+    if (e == NULL)
+    {
+        /* Server shutdown, ignore ... */
+        return 0;
+    }
+    if (e->client->registered != 1)
+    {
+        /* Not even registered, ignore */
+        return 0;
+    }
+    
+    /* Inform clients on channels */
+    client_channel *c_channel = e->client->channels;
+    send_message_buffer *buffer = NULL;
+    while(c_channel != NULL)
+    {
+        if (buffer == NULL)
+        {
+            buffer = send_create_buffer_format(":%s QUIT", e->client->nickname);
+        }
+        send_enqueue_channel(c_channel->channel, buffer);
+        c_channel = c_channel->next;
+    }
+    
+    return 0;    
+}
+
 // TODO: Lowercase (RFC lowercase!) hashing and comparison
 
 void client_nickname_hashtable_add(client_data *client)
