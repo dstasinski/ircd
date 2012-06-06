@@ -141,13 +141,11 @@ int send_callback_data_out(event_callback_data *e)
         
         // Send the remaining portion of the current buffer
         size_t remaining = current->buffer->contents_length - current->buffer_position;
-        // TODO: Add MSG_NOSIGNAL flag, or some other signal handling solution
         ssize_t n = send(e->client->fd, current->buffer->contents+current->buffer_position, remaining, 0);
         if (n < 0)
         {
             if (errno != EAGAIN && errno != EWOULDBLOCK)
             {
-                // TODO: Close this socket, call disconnect event
                 error_print("send");
                 return -1;
             }
@@ -158,9 +156,6 @@ int send_callback_data_out(event_callback_data *e)
         if (n < remaining)
         {
             // Didn't send everything, move the buffer position and try again
-            // TODO: Figure out if this only happens when the socket is full, 
-            // ie. the next call will result in EAGAIN/EWOULDBLOCK, in that
-            // case don't bother looping and just return
             current->buffer_position += n;
             continue;
         }

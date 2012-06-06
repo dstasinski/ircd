@@ -27,7 +27,10 @@ message_data *message_parse(char *buffer)
         }
         
         length = buffer - start;
-        // TODO: Check that length < sizeof(->prefix)
+        if (length > RFC_PREFIX_MAXLENGTH)
+        {
+            length = RFC_PREFIX_MAXLENGTH;
+        }
         strncpy(message->prefix, start, length);
         message->prefix[length] = '\0';
         
@@ -168,7 +171,6 @@ void message_dispatch_command(const char *command, message_callback_data *data)
     
     if (found == 0)
     {
-        // TODO: make a debug print
-        printf("No handler for %s\n", command);
+        debug_print_format("No handler for %s\n", command);
     }
 }

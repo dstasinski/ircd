@@ -18,7 +18,13 @@ int _error_print_exit(const char *scope, const char *call, const char *file, int
 void _info_print(const char *message);
 void _info_print_format(const char *format, ...);
 
-//int error_print_exit(char *scope, char *call);
+void debug_set_verbose(int verbose);
+
+// Only prints when verbose mode is active
+#define debug_print(msg) _debug_print((msg))
+#define debug_print_format(format, ...) _debug_print_format((format), __VA_ARGS__)
+void _debug_print(const char *message);
+void _debug_print_format(const char *format, ...);
 
 unsigned long hash(const char *string);
 

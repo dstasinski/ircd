@@ -56,8 +56,6 @@ void event_start_loop_epoll(int serverfd)
                 callback_data.buffer = NULL;
                 callback_data.buffer_length = 0;
                 
-                // TODO: Clean up, merge with the other disconnect so that
-                // the disconnect event is dispatched
                 if (events[i].events & EPOLLERR || events[i].events & EPOLLHUP || !(events[i].events & (EPOLLIN | EPOLLOUT)))
                 {
                     /* An error occurred on this socket (or disconnected) */
@@ -88,7 +86,7 @@ void event_start_loop_epoll(int serverfd)
                             error_print_exit("socket_epoll_ctl");
                         }
                         
-                        info_print_format("Accepted new connection, fd: %d", clientfd);
+                        debug_print_format("Accepted new connection, fd: %d", clientfd);
                         
                         callback_data.client_new = client_new;
                         event_dispatch_event(event_flags_connect, &callback_data);

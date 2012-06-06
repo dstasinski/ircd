@@ -90,7 +90,6 @@ void client_delete(client_data* client)
         client_nickname_hashtable_remove(client);
     }
     
-    // TODO: static allocation, or macros or something to avoid this mess
     if (client->nickname != NULL)
     {
         free(client->nickname);
@@ -168,10 +167,10 @@ int client_callback_data_in(event_callback_data *e)
             message_data *message = message_parse(e->client->line_buffer);
             
             // Process the message
-            info_print_format("Got message %s", e->client->line_buffer); // TODO: Change to debug print, not info
+            debug_print_format("%d :: %s", e->client->fd, e->client->line_buffer);
             if (message != NULL)
             {
-                info_print_format("Command [%s] argc=%d", message->command, message->argc);
+                debug_print_format("Command [%s], argc=%d", message->command, message->argc);
                 
                 // TODO: Make static / reuse inside the function / something else
                 message_callback_data *callback_data = malloc(sizeof(message_callback_data));

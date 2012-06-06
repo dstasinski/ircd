@@ -6,10 +6,9 @@
 
 typedef struct message_data
 {
-    // TODO: parse prefix, verify, maybe use dynamic allocation
-    char prefix[RFC_PREFIX_MAXLENGTH];
+    char prefix[RFC_PREFIX_MAXLENGTH+1];
     
-    char command[RFC_COMMAND_MAXLENGTH];
+    char command[RFC_COMMAND_MAXLENGTH+1];
     int command_numeric;
     
     int argc;
@@ -31,7 +30,7 @@ typedef int (*message_callback_func)(message_callback_data *callback_data);
 typedef struct message_handler
 {
     message_callback_func callback;
-    char command[RFC_COMMAND_MAXLENGTH];
+    char command[RFC_COMMAND_MAXLENGTH+1];
     
     struct message_handler *next;
 } message_handler;

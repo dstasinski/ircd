@@ -112,7 +112,7 @@ int channel_client_part(channel_data *channel, client_data *client)
     /* Last client parted */
     if (channel->clients == NULL)
     {
-        info_print_format("destroying channel %s", channel->name);
+        debug_print_format("Destroying channel: %s", channel->name);
         channel_delete(channel);
         /* Return -1 to show that the channel was deleted */
         return -1;

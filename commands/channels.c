@@ -32,7 +32,7 @@ int command_join(message_callback_data *e)
     if (channel == NULL)
     {
         /* Create new channel */
-        info_print_format("creating new channel %s", e->message_data->argv[0]);
+        debug_print_format("Creating new channel: %s", e->message_data->argv[0]);
         channel = channel_create_new(e->message_data->argv[0]);
     }
     

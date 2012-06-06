@@ -141,7 +141,7 @@ void event_start_loop_select(int serverfd)
                             client_data *client_new = client_allocate_new();
                             client_new->fd = clientfd;
                             
-                            info_print_format("Accepted new connection, fd: %d", clientfd);
+                            debug_print_format("Accepted new connection, fd: %d", clientfd);
                         
                             callback_data.client_new = client_new;
                             event_dispatch_event(event_flags_connect, &callback_data);

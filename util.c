@@ -17,7 +17,6 @@
 void *_backtrace_buffer[DEBUG_BACKTRACE_MAXLENGTH];
 #endif 
 
-// TODO: Put the attribute to definition, if possible
 inline void _debug_print_backtrace() __attribute__((always_inline));
 inline void _debug_print_backtrace()
 {
@@ -56,11 +55,41 @@ int _error_print_exit(const char *scope, const char *call, const char *file, int
 
 void _info_print(const char *message)
 {
-    printf("Info: %s\n", message);
+    _info_print_format("%s", message);
 }
 
 void _info_print_format(const char *format, ...)
 {
+    printf("Info: ");
+    
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+    
+    printf("\n");
+}
+
+static int debug_verbose = 0;
+void debug_set_verbose(int verbose)
+{
+    debug_verbose = verbose;
+}
+
+void _debug_print(const char *message)
+{
+    _debug_print_format("%s", message);
+}
+
+void _debug_print_format(const char *format, ...)
+{
+    if (!debug_verbose)
+    {
+        return;
+    }
+    
+    printf("Debug: ");
+    
     va_list args;
     va_start(args, format);
     vprintf(format, args);
