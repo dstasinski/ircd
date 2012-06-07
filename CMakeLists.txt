@@ -8,6 +8,7 @@ mark_as_advanced (FORCE CMAKE_BUILD_TYPE CMAKE_INSTALL_PREFIX)
 option (BUILD_DEBUG "Compile with debug options" OFF)
 option (USE_GETOPT "Use getopt to parse command line arguments" ON)
 option (USE_BACKTRACE "Print backtrace on error" ON)
+option (USE_EPOLL "Use epoll instead of select" OFF)
 
 # setup compiler/linker flags
 if (BUILD_DEBUG)
@@ -32,7 +33,10 @@ if (USE_BACKTRACE)
 	add_definitions ("-DDEBUG_PRINT_BACKTRACE")
 	set (LINK_FLAGS "-rdynamic")
 endif ()
-
+if (USE_EPOLL)
+	message(STATUS "Enabling epoll")
+	add_definitions ("-DUSE_EPOLL")
+endif ()
 file (GLOB ircd_SRCS src/*.c src/commands/*.c)
 
 add_executable (ircd ${ircd_SRCS})
