@@ -4,80 +4,49 @@
                                | | | | (_| (_| |
                                |_|_|  \___\__,_|
 
-                       Projekt na Systemove Programovanie
-                        ircd - minimalisticky irc server
-
-                                 Ladislav Pápay
+                       
+                         ircd - minimalistic irc server
 
 ================================================================================
 
-~~ O projekte ~~
+~~ About ~~
 
-	Jednoduchy, minimalisticky irc server. Podporuje zopar zakladnych prikazov
-    z RFC 1459. Da sa k nemu pripojit "rucne" cez telnet alebo z klasickeho
-    IRC klienta. Niektorym klientom mozno bude vadit, ze nedostavaju odpovede
-    na vsetky svoje dotazy. XChat fungoval v poriadku.
+	Very simple irc server made as a project for a System programming class.
+	Support small subset of RFC 1459:
+		
+		NICK, JOIN, WHO, PART, PRIVMSG, QUIT
 
-    Po zapnuti je mozne pripojit sa na nastavenom porte (pripadne adrese) a
-    dalej uz komunikovat cez textovy IRC protokol. Zakladne prikazy:
-
-    NICK test               // Nastavi uzivatelske meno, bez tohto nie je
-                            // mozne vyuzivat ostatne prikazy.
-    
-    JOIN #a                 // Vstupi do kanalu #a. Nazov musi zacinat znakom #.
-                            // Ak kanal neexistuje (nikto v nom nie je) tak sa
-                            // vytvori.
-
-    WHO #a                  // Vrati zoznam uzivatelov v kanale #a. Dolezite
-                            // len hned po JOINe, potom uz budu vsetky dalsie
-                            // JOIN a PART spravy prieposielane.
-
-    PART #a                 // Opusti kanal #a. Prestane prijmat spravy urcene
-                            // tomuto kanalu.
-
-    PRIVMSG foo :Ahoj!      // Posle spravu uzivatelovi foo s textom "Ahoj!"
-
-    PRIVMSG #a :Hello!      // Posle spravu vsetkym uzivatelom v kanale #a.
-
-    QUIT                    // Odpojenie od serveru
-
-~~ select / epoll ~~
-
-    Pri konfiguracii je mozne pouzit namiesto volania select() sadu funkcii
-    epoll (linux 2.6.27, glibc 2.9).
-
+	Should work fine with most clients but they won't be happy, since they
+	won't receive responses to most of their queries.
+	
 ~~ CLI ~~
 
-	Ak je pri konfiguracii povolene pouzitie getopt tak je mozne pouzit
-    nasledovne prepinace pri spusteni:
+	If CLI (getopt) is enabled during configuration and compilation you can use
+	the following options:
 
     ircd [-v] [-a addr] [-p port]
 
-        -v      Zapina verbose vystup, zobrazuje vsetky prijate spravy a
-                udalosti ako vytvorenie/znicenie kanalu a podobne.
-                Defaultne vypnute.
+        -v      Enable verbose (debug) output. Default is off.
 
-        -a      Nastavuje adresu na ktorej bude server "pocuvat".
-                Defaultne INADDR_ANY.
+        -a      Set the listening address. Default is INADDR_ANY.
 
-        -p      Nastavuje port. Defaultne 6667.
+        -p      Set the port port. Default is 6667.
 
-~~ Konfiguracia a kompilacia ~~
+~~ Build process ~~
 
-    V principe staci skompilovat a zlinkovat vsetky subory:
+    You can just compile and link all files in the project:
     
         $ gcc -std=c99 -c src/*.c src/commands/*.c
         $ gcc -o ircd *.o
 
-    Projekt obsahuje aj konfiguracny subor pre CMake:
+    There is also a CMake configaration file that will produce the required
+	makefile:
 
         $ cmake .
         $ make
    
-    Dodatocna konfiguracia pomocou CUI je mozna cez
+    Extra options can be enabled/disabled with the CUI configurator:
 
         $ ccmake .
 
 ================================================================================
-
-Odovzdana verzia: <<TODO>>
