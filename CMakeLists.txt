@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 project (ircd)
 
 # hide default options from ccmake
-mark_as_advanced (FORCE CMAKE_INSTALL_PREFIX)
+mark_as_advanced (FORCE CMAKE_BUILD_TYPE CMAKE_INSTALL_PREFIX)
 
 # custom options
 option (BUILD_DEBUG "Compile with debug options" OFF)
