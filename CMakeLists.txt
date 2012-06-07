@@ -5,12 +5,12 @@ project (ircd)
 mark_as_advanced (FORCE CMAKE_INSTALL_PREFIX)
 
 # custom options
-option (_BUILD_DEBUG "Compile with debug options" OFF)
-option (_USE_GETOPT "Use getopt to parse command line arguments" ON)
-option (_USE_BACKTRACE "Print backtrace on error" ON)
+option (BUILD_DEBUG "Compile with debug options" OFF)
+option (USE_GETOPT "Use getopt to parse command line arguments" ON)
+option (USE_BACKTRACE "Print backtrace on error" ON)
 
 # setup compiler/linker flags
-if (_BUILD_DEBUG)
+if (BUILD_DEBUG)
 	message(STATUS "Debug build")
 	set(CMAKE_BUILD_TYPE "Debug")
 else ()
