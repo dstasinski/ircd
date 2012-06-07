@@ -1,0 +1,83 @@
+                                _             _
+                               (_)_ __ ___ __| |
+                               | | '__/ __/ _` |
+                               | | | | (_| (_| |
+                               |_|_|  \___\__,_|
+
+                       Projekt na Systemove Programovanie
+                        ircd - minimalisticky irc server
+
+                                 Ladislav Pápay
+
+================================================================================
+
+~~ O projekte ~~
+
+	Jednoduchy, minimalisticky irc server. Podporuje zopar zakladnych prikazov
+    z RFC 1459. Da sa k nemu pripojit "rucne" cez telnet alebo z klasickeho
+    IRC klienta. Niektorym klientom mozno bude vadit, ze nedostavaju odpovede
+    na vsetky svoje dotazy. XChat fungoval v poriadku.
+
+    Po zapnuti je mozne pripojit sa na nastavenom porte (pripadne adrese) a
+    dalej uz komunikovat cez textovy IRC protokol. Zakladne prikazy:
+
+    NICK test               // Nastavi uzivatelske meno, bez tohto nie je
+                            // mozne vyuzivat ostatne prikazy.
+    
+    JOIN #a                 // Vstupi do kanalu #a. Nazov musi zacinat znakom #.
+                            // Ak kanal neexistuje (nikto v nom nie je) tak sa
+                            // vytvori.
+
+    WHO #a                  // Vrati zoznam uzivatelov v kanale #a. Dolezite
+                            // len hned po JOINe, potom uz budu vsetky dalsie
+                            // JOIN a PART spravy prieposielane.
+
+    PART #a                 // Opusti kanal #a. Prestane prijmat spravy urcene
+                            // tomuto kanalu.
+
+    PRIVMSG foo :Ahoj!      // Posle spravu uzivatelovi foo s textom "Ahoj!"
+
+    PRIVMSG #a :Hello!      // Posle spravu vsetkym uzivatelom v kanale #a.
+
+    QUIT                    // Odpojenie od serveru
+
+~~ select / epoll ~~
+
+    Pri konfiguracii je mozne pouzit namiesto volania select() sadu funkcii
+    epoll (linux 2.6.27, glibc 2.9).
+
+~~ CLI ~~
+
+	Ak je pri konfiguracii povolene pouzitie getopt tak je mozne pouzit
+    nasledovne prepinace pri spusteni:
+
+    ircd [-v] [-a addr] [-p port]
+
+        -v      Zapina verbose vystup, zobrazuje vsetky prijate spravy a
+                udalosti ako vytvorenie/znicenie kanalu a podobne.
+                Defaultne vypnute.
+
+        -a      Nastavuje adresu na ktorej bude server "pocuvat".
+                Defaultne INADDR_ANY.
+
+        -p      Nastavuje port. Defaultne 6667.
+
+~~ Konfiguracia a kompilacia ~~
+
+    V principe staci skompilovat a zlinkovat vsetky subory:
+    
+        $ gcc -std=c99 -c src/*.c src/commands/*.c
+        $ gcc -o ircd *.o
+
+    Projekt obsahuje aj konfiguracny subor pre CMake:
+
+        $ cmake .
+        $ make
+   
+    Dodatocna konfiguracia pomocou CUI je mozna cez
+
+        $ ccmake .
+
+================================================================================
+
+Odovzdana verzia: <<TODO>>
