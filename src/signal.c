@@ -15,8 +15,8 @@ void signal_soft_handler(int signum)
 {
     info_print("Initiating shutdown, send another SIGINT to force");
     signal(SIGINT, signal_hard_handler);
-    
-    event_initiate_shutdown();    
+
+    event_initiate_shutdown();
 }
 
 void signal_register_handlers()

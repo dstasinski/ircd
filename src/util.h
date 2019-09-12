@@ -28,4 +28,4 @@ void _debug_print_format(const char *format, ...);
 
 unsigned long hash(const char *string);
 
-#endif	/* UTIL_H */
+#endif                          /* UTIL_H */

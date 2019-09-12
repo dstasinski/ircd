@@ -3,4 +3,4 @@
 
 void signal_register_handlers();
 
-#endif	/* SIGNAL_H */
+#endif                          /* SIGNAL_H */

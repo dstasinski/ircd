@@ -4,7 +4,7 @@
 
 #ifdef DEBUG_PRINT_BACKTRACE
 #include <execinfo.h>
-#endif 
+#endif
 
 #include "util.h"
 
@@ -15,27 +15,25 @@
 #endif
 
 void *_backtrace_buffer[DEBUG_BACKTRACE_MAXLENGTH];
-#endif 
+#endif
 
-inline void _debug_print_backtrace() __attribute__((always_inline));
+inline void _debug_print_backtrace() __attribute__ ((always_inline));
 inline void _debug_print_backtrace()
 {
 #ifdef DEBUG_PRINT_BACKTRACE
     size_t size = backtrace(_backtrace_buffer, DEBUG_BACKTRACE_MAXLENGTH);
     char **symbols = backtrace_symbols(_backtrace_buffer, size);
-    if (symbols == NULL)
-    {
+    if (symbols == NULL) {
         fprintf(stderr, "\tBacktrace failed\n");
         return;
     }
-    
+
     fprintf(stderr, "\tBacktrace:\n");
-    for(int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         fprintf(stderr, "\t[%02d] %s\n", i, symbols[i]);
     }
-    
-    free(symbols);    
+
+    free(symbols);
 #endif
 }
 
@@ -61,12 +59,12 @@ void _info_print(const char *message)
 void _info_print_format(const char *format, ...)
 {
     printf("Info: ");
-    
+
     va_list args;
     va_start(args, format);
     vprintf(format, args);
     va_end(args);
-    
+
     printf("\n");
 }
 
@@ -83,32 +81,30 @@ void _debug_print(const char *message)
 
 void _debug_print_format(const char *format, ...)
 {
-    if (!debug_verbose)
-    {
+    if (!debug_verbose) {
         return;
     }
-    
+
     printf("Debug: ");
-    
+
     va_list args;
     va_start(args, format);
     vprintf(format, args);
     va_end(args);
-    
+
     printf("\n");
 }
 
 unsigned long hash(const char *string)
 {
     // djb2 - simple string hashing
-    
+
     unsigned long hash = 5381;
     int c;
-    
-    while ((c = *string++))
-    {
-        hash = ((hash << 5) + hash) + c; // hash*33 + c
+
+    while ((c = *string++)) {
+        hash = ((hash << 5) + hash) + c;        // hash*33 + c
     }
-    
+
     return hash;
 }
