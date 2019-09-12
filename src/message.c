@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <strings.h>
 
 #include "message.h"
 #include "util.h"
@@ -135,7 +136,7 @@ void message_dispatch_command(const char *command, message_callback_data * data)
 
     int found = 0;
     while (handler != NULL) {
-        if (strcmp(command, handler->command) == 0) {
+        if (strcasecmp(command, handler->command) == 0) {
             found = 1;
             handler->callback(data);
             // TODO: Check return value, 0 means handled, other values are some

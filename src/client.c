@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 
 #include "client.h"
 #include "event.h"
@@ -225,7 +226,7 @@ client_data *client_nickname_hashtable_find(char *nickname)
 {
     client_data *client = client_nickname[hash(nickname) % CLIENT_NICKNAME_HASHTABLE_SIZE];
     while (client != NULL) {
-        if (strcmp(client->nickname, nickname) == 0) {
+        if (strcasecmp(client->nickname, nickname) == 0) {
             return client;
         }
         client = client->nickname_next;

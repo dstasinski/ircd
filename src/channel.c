@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <strings.h>
 
 #include "channel.h"
 #include "client.h"
@@ -133,7 +134,7 @@ channel_data *channel_hashtable_find(const char *name)
 {
     channel_data *channel = channel_name[hash(name) % CHANNEL_HASHTABLE_SIZE];
     while (channel != NULL) {
-        if (strcmp(channel->name, name) == 0) {
+        if (strcasecmp(channel->name, name) == 0) {
             return channel;
         }
         channel = channel->name_next;

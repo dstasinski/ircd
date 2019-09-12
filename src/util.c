@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #ifdef DEBUG_PRINT_BACKTRACE
 #include <execinfo.h>
@@ -102,7 +103,7 @@ unsigned long hash(const char *string)
     unsigned long hash = 5381;
     int c;
 
-    while ((c = *string++)) {
+    while ((c = toupper(*string++))) {
         hash = ((hash << 5) + hash) + c;        // hash*33 + c
     }
 
